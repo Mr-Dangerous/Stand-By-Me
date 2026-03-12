@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stand By Me — Ostinato Player</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Coming+Soon&family=Patrick+Hand&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      font-family: 'Patrick Hand', cursive;
+      background: #f5f5f5;
+      color: #222;
+      height: 100%;
+      overflow: hidden;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      grid-template-columns: 1fr;
+      padding: 16px 24px;
+      gap: 10px;
+    }
+
+    /* ---------- HEADER ---------- */
+    .header {
+      text-align: center;
+    }
+
+    .header h1 {
+      font-family: 'Coming Soon', cursive;
+      font-size: 2.2rem;
+      margin-bottom: 2px;
+    }
+
+    .header .subtitle {
+      font-size: 1.1rem;
+      color: #555;
+    }
+
+    /* ---------- TRANSPORT BAR ---------- */
+    .transport-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .transport-bar button {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.4rem;
+      padding: 14px 36px;
+      border: 3px solid #222;
+      border-radius: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.15s;
+      touch-action: manipulation;
+    }
+
+    .transport-bar button:hover,
+    .transport-bar button:active { background: #e0e0e0; }
+    .transport-bar button.playing { background: #222; color: #fff; }
+
+    .tempo-control {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.2rem;
+    }
+
+    .tempo-control input[type="range"] {
+      width: 180px;
+      height: 30px;
+      accent-color: #222;
+    }
+
+    .tempo-display {
+      font-weight: bold;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .beat-bar {
+      display: flex;
+      gap: 5px;
+      margin-left: 16px;
+    }
+
+    .beat-dot {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #222;
+      background: #fff;
+      transition: background 0.05s;
+    }
+
+    .beat-dot.active { background: #222; }
+    .beat-dot.downbeat { border-width: 3px; }
+
+    .measure-display {
+      font-size: 1.1rem;
+      color: #555;
+      min-width: 120px;
+    }
+
+    .loop-toggle {
+      font-size: 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .loop-toggle input { accent-color: #222; width: 22px; height: 22px; }
+
+    /* ---------- MAIN CONTENT: two columns ---------- */
+    .main-content {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      overflow: hidden;
+    }
+
+    /* ---------- LEFT: instruments ---------- */
+    .instruments-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow-y: auto;
+    }
+
+    .instruments-panel h2 {
+      font-family: 'Coming Soon', cursive;
+      font-size: 1.3rem;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .part-toggle {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 18px;
+      border: 3px solid #222;
+      border-radius: 12px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.15s;
+      user-select: none;
+      touch-action: manipulation;
+      flex-shrink: 0;
+    }
+
+    .part-toggle:active { background: #d0d0d0; }
+    .part-toggle.muted { opacity: 0.3; background: #eee; }
+
+    .part-toggle .indicator {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      border: 3px solid #222;
+      background: #222;
+      flex-shrink: 0;
+    }
+
+    .part-toggle.muted .indicator { background: #fff; }
+
+    .part-toggle .part-name {
+      font-size: 1.3rem;
+      font-weight: bold;
+    }
+
+    .part-toggle .part-desc {
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    /* ---------- RIGHT: lyrics ---------- */
+    .lyrics-panel {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .lyrics-panel h2 {
+      font-family: 'Coming Soon', cursive;
+      font-size: 1.3rem;
+      text-align: center;
+      margin-bottom: 8px;
+      flex-shrink: 0;
+    }
+
+    .lyrics-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 10px;
+      flex-shrink: 0;
+    }
+
+    .lyrics-tabs button {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.15rem;
+      padding: 10px 18px;
+      border: 3px solid #222;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      transition: all 0.15s;
+      touch-action: manipulation;
+    }
+
+    .lyrics-tabs button:active { background: #d0d0d0; }
+    .lyrics-tabs button.active { background: #222; color: #fff; }
+
+    .lyrics-tabs button.auto-advance {
+      background: #444;
+      color: #fff;
+      border-color: #444;
+    }
+
+    .lyrics-tabs button.auto-advance.active {
+      background: #d4a017;
+      border-color: #d4a017;
+      color: #222;
+    }
+
+    .lyrics-display {
+      flex: 1;
+      background: #fff;
+      border: 3px solid #222;
+      border-radius: 14px;
+      padding: 24px 30px;
+      font-size: 1.8rem;
+      line-height: 1.7;
+      text-align: center;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .lyrics-display .section-title {
+      font-family: 'Coming Soon', cursive;
+      font-weight: bold;
+      font-size: 1.3rem;
+      color: #555;
+      margin-bottom: 10px;
+      border-bottom: 2px dashed #aaa;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1>Stand By Me — Ostinato Player</h1>
+    <div class="subtitle">Prince Royce | Key of C</div>
+  </div>
+
+  <!-- TRANSPORT BAR -->
+  <div class="transport-bar">
+    <button id="playBtn" onclick="togglePlay()">Play</button>
+    <button onclick="stopAll()">Stop</button>
+    <div class="tempo-control">
+      <span>Tempo:</span>
+      <input type="range" id="tempoSlider" min="60" max="180" value="120" oninput="setTempo(this.value)">
+      <span class="tempo-display" id="tempoDisplay">120 BPM</span>
+    </div>
+    <span class="measure-display" id="measureDisplay">Measure: — / 8</span>
+    <div class="beat-bar" id="beatBar"></div>
+    <label class="loop-toggle">
+      <input type="checkbox" id="loopCheck" checked> Loop
+    </label>
+  </div>
+
+  <!-- MAIN: instruments left, lyrics right -->
+  <div class="main-content">
+    <div class="instruments-panel">
+      <h2>Instruments</h2>
+      <div id="partsContainer"></div>
+    </div>
+    <div class="lyrics-panel">
+      <h2>Lyrics</h2>
+      <div class="lyrics-tabs" id="lyricsTabs"></div>
+      <div class="lyrics-display" id="lyricsDisplay">
+        <div><em>Select a section above</em></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===================== PART DEFINITIONS =====================
+
+    const PARTS = {
+      ukulele: {
+        name: "Ukulele",
+        desc: "Palm mute strum",
+        muted: false,
+        synth: null,
+        // Stand By Me rhythm: 8th, qr, 8th, qr, qr
+        // In 8th note grid (8 per measure): hit on 1, hit on 4
+        pattern: function(time, measure) {
+          if (this.muted) return;
+          const eighth = Tone.Time("8n").toSeconds();
+          this.synth.triggerAttackRelease("C4", "16n", time, 0.3);
+          this.synth.triggerAttackRelease("C4", "16n", time + eighth * 3, 0.3);
+        }
+      },
+      cabasa: {
+        name: "Cabasa",
+        desc: "Eighth notes, accented",
+        muted: false,
+        synth: null,
+        pattern: function(time, measure) {
+          if (this.muted) return;
+          const eighth = Tone.Time("8n").toSeconds();
+          for (let i = 0; i < 8; i++) {
+            const accent = (i === 0 || i === 3);
+            this.synth.triggerAttackRelease(
+              accent ? "C5" : "C5",
+              "32n",
+              time + eighth * i,
+              accent ? 0.8 : 0.25
+            );
+          }
+        }
+      },
+      guiro: {
+        name: "Guiro",
+        desc: "Tap + scrapes",
+        muted: false,
+        synth: null,
+        // 8th tap, 2x16th scrape, 6x8th scrape
+        pattern: function(time, measure) {
+          if (this.muted) return;
+          const eighth = Tone.Time("8n").toSeconds();
+          const sixteenth = Tone.Time("16n").toSeconds();
+          // Tap
+          this.synthTap.triggerAttackRelease("32n", time);
+          // 2 sixteenths + 6 eighths = 8 scrape hits, round-robin through pool
+          const times = [
+            time + eighth,
+            time + eighth + sixteenth,
+            time + eighth * 2,
+            time + eighth * 3,
+            time + eighth * 4,
+            time + eighth * 5,
+            time + eighth * 6,
+            time + eighth * 7
+          ];
+          for (const t of times) {
+            this.scrapePool[this.scrapeIndex].triggerAttackRelease("32n", t);
+            this.scrapeIndex = (this.scrapeIndex + 1) % this.scrapePool.length;
+          }
+        }
+      },
+      bass: {
+        name: "Bass",
+        desc: "Walking bass line",
+        muted: false,
+        synth: null,
+        measures: [
+          // m1 C
+          [["C3","8n",0], ["C3","4n.",3], ["G2","8n",6], ["B2","8n",7]],
+          // m2 C
+          [["C3","8n",0], ["C3","4n.",3], ["C3","8n",6], ["B2","8n",7]],
+          // m3 Am
+          [["A2","8n",0], ["A2","4n.",3], ["G2","4n",6]],
+          // m4 Am
+          [["A2","8n",0], ["A2","4n.",3], ["A2","8n",6], ["G2","8n",7]],
+          // m5 F
+          [["F2","8n",0], ["F2","4n.",3], ["F2","8n",6], ["A2","8n",7]],
+          // m6 G
+          [["G2","8n",0], ["G2","4n.",3], ["B2","4n",6]],
+          // m7 C
+          [["C3","8n",0], ["C3","4n.",3], ["G2","8n",6], ["B2","8n",7]],
+          // m8 C
+          [["C3","8n",0], ["C3","4n.",3], ["G2","8n",6], ["B2","8n",7]],
+        ],
+        pattern: function(time, measure) {
+          if (this.muted) return;
+          const eighth = Tone.Time("8n").toSeconds();
+          const notes = this.measures[measure];
+          for (const [note, dur, pos] of notes) {
+            this.synth.triggerAttackRelease(note, dur, time + eighth * pos);
+          }
+        }
+      },
+      drums: {
+        name: "Bass Drum",
+        desc: "Dotted quarter pattern",
+        muted: false,
+        synth: null,
+        pattern: function(time, measure) {
+          if (this.muted) return;
+          const eighth = Tone.Time("8n").toSeconds();
+          if (measure < 7) {
+            // bd4. bd8 r4 r4
+            this.synth.triggerAttackRelease("C1", "4n.", time, 0.9);
+            this.synth.triggerAttackRelease("C1", "8n", time + eighth * 3, 0.7);
+          } else {
+            // m8: four quarter notes
+            for (let i = 0; i < 4; i++) {
+              this.synth.triggerAttackRelease("C1", "8n", time + eighth * 2 * i, 0.9);
+            }
+          }
+        }
+      }
+    };
+
+    // ===================== INIT SYNTHS =====================
+
+    function initSynths() {
+      // ---- Master bus: light compression + reverb ----
+      const masterComp = new Tone.Compressor({
+        threshold: -20,
+        ratio: 3,
+        attack: 0.01,
+        release: 0.1
+      }).toDestination();
+
+      const masterReverb = new Tone.Reverb({
+        decay: 1.5,
+        wet: 0.15
+      }).connect(masterComp);
+
+      // ---- UKULELE: multi-string pluck for chord strum ----
+      const ukeStrings = [];
+      const ukeFilter = new Tone.Filter({
+        type: "lowpass",
+        frequency: 1800,
+        rolloff: -24
+      }).connect(masterReverb);
+      const ukeGain = new Tone.Gain(1.0).connect(ukeFilter);
+      for (let i = 0; i < 4; i++) {
+        const s = new Tone.PluckSynth({
+          attackNoise: 0.8,
+          dampening: 1500,
+          resonance: 0.88
+        }).connect(ukeGain);
+        ukeStrings.push(s);
+      }
+      // Strum a C chord across 4 strings with slight delay
+      PARTS.ukulele.synth = {
+        triggerAttackRelease: function(note, dur, time, vel) {
+          const chordNotes = ["G4", "C4", "E4", "C5"];
+          const strumDelay = 0.012;
+          chordNotes.forEach((n, i) => {
+            ukeStrings[i].triggerAttackRelease(n, "32n", time + strumDelay * i);
+          });
+        }
+      };
+
+      // ---- CABASA: bandpass-filtered noise for metallic shaker ----
+      const cabasaFilter = new Tone.Filter({
+        type: "bandpass",
+        frequency: 7000,
+        Q: 1.5
+      }).connect(masterComp);
+
+      const cabasaNoise = new Tone.NoiseSynth({
+        noise: { type: "white" },
+        envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.015 }
+      }).connect(cabasaFilter);
+      cabasaNoise.volume.value = -14;
+
+      PARTS.cabasa.synth = {
+        triggerAttackRelease: function(note, dur, time, vel) {
+          cabasaNoise.volume.value = vel > 0.5 ? -10 : -20;
+          cabasaNoise.triggerAttackRelease("32n", time);
+        }
+      };
+
+      // ---- GUIRO: pool of synths to avoid choking ----
+      const guiroTapFilter = new Tone.Filter({
+        type: "highpass",
+        frequency: 5000
+      }).connect(masterComp);
+
+      const guiroTap = new Tone.NoiseSynth({
+        noise: { type: "white" },
+        envelope: { attack: 0.001, decay: 0.025, sustain: 0, release: 0.01 }
+      }).connect(guiroTapFilter);
+      guiroTap.volume.value = -8;
+      PARTS.guiro.synthTap = guiroTap;
+
+      // Pool of scrape synths (8 notes per measure, need several)
+      const guiroScrapeFilter = new Tone.Filter({
+        type: "bandpass",
+        frequency: 3500,
+        Q: 2
+      }).connect(masterComp);
+
+      const scrapePool = [];
+      for (let i = 0; i < 8; i++) {
+        const s = new Tone.NoiseSynth({
+          noise: { type: "pink" },
+          envelope: { attack: 0.003, decay: 0.055, sustain: 0, release: 0.02 }
+        }).connect(guiroScrapeFilter);
+        s.volume.value = -14;
+        scrapePool.push(s);
+      }
+      PARTS.guiro.scrapePool = scrapePool;
+      PARTS.guiro.scrapeIndex = 0;
+
+      // ---- BASS: warm finger-style bass ----
+      const bassFilter = new Tone.Filter({
+        type: "lowpass",
+        frequency: 600,
+        rolloff: -24
+      }).connect(masterComp);
+
+      PARTS.bass.synth = new Tone.MonoSynth({
+        oscillator: { type: "fmsine", modulationIndex: 0.8 },
+        envelope: { attack: 0.03, decay: 0.25, sustain: 0.5, release: 0.4 },
+        filterEnvelope: {
+          attack: 0.02,
+          decay: 0.2,
+          sustain: 0.3,
+          release: 0.3,
+          baseFrequency: 120,
+          octaves: 2.5
+        }
+      }).connect(bassFilter);
+      PARTS.bass.synth.volume.value = 0;
+
+      // ---- BASS DRUM: deep kick with sub thump ----
+      const kickFilter = new Tone.Filter({
+        type: "lowpass",
+        frequency: 200,
+        rolloff: -12
+      }).connect(masterComp);
+
+      PARTS.drums.synth = new Tone.MembraneSynth({
+        pitchDecay: 0.08,
+        octaves: 6,
+        envelope: { attack: 0.006, decay: 0.5, sustain: 0, release: 0.5 }
+      }).connect(kickFilter);
+      PARTS.drums.synth.volume.value = -2;
+    }
+
+    // ===================== TRANSPORT =====================
+
+    let isPlaying = false;
+    let currentMeasure = 0;
+    let currentBeat = 0;
+    let loopId = null;
+
+    function togglePlay() {
+      if (isPlaying) {
+        stopAll();
+      } else {
+        startPlay();
+      }
+    }
+
+    async function startPlay() {
+      await Tone.start();
+      if (!PARTS.ukulele.synth) initSynths();
+
+      isPlaying = true;
+      currentMeasure = 0;
+      currentBeat = 0;
+      document.getElementById("playBtn").classList.add("playing");
+      document.getElementById("playBtn").textContent = "Pause";
+
+      Tone.Transport.cancel();
+      Tone.Transport.stop();
+      Tone.Transport.position = 0;
+
+      Tone.Transport.scheduleRepeat((time) => {
+        const m = currentMeasure;
+        const b = currentBeat;
+
+        // Trigger parts on beat 0 of each measure
+        if (b === 0) {
+          for (const key in PARTS) {
+            PARTS[key].pattern(time, m);
+          }
+        }
+
+        // Capture global beat before advancing
+        const globalBeat = m * 4 + b;
+        const measNum = m;
+
+        // Visual update — schedule relative to current audio time
+        const delay = Math.max(0, (time - Tone.context.currentTime) * 1000);
+        setTimeout(() => {
+          updateBeatDisplayDirect(globalBeat);
+          document.getElementById("measureDisplay").textContent =
+            `Measure: ${measNum + 1} / 8`;
+        }, delay);
+
+        // Advance
+        currentBeat++;
+        if (currentBeat >= 4) {
+          currentBeat = 0;
+          currentMeasure++;
+          if (currentMeasure >= 8) {
+            if (document.getElementById("loopCheck").checked) {
+              currentMeasure = 0;
+            } else {
+              setTimeout(() => stopAll(), 0);
+            }
+          }
+        }
+      }, "4n");
+
+      Tone.Transport.start("+0.1");
+    }
+
+    function stopAll() {
+      isPlaying = false;
+      Tone.Transport.stop();
+      Tone.Transport.cancel();
+      currentMeasure = 0;
+      currentBeat = 0;
+      document.getElementById("playBtn").classList.remove("playing");
+      document.getElementById("playBtn").textContent = "Play";
+      document.getElementById("measureDisplay").textContent = "Measure: — / 8";
+      clearBeatDisplay();
+    }
+
+    function setTempo(val) {
+      Tone.Transport.bpm.value = val;
+      document.getElementById("tempoDisplay").textContent = val + " BPM";
+    }
+
+    // ===================== BEAT DISPLAY =====================
+
+    function buildBeatBar() {
+      const bar = document.getElementById("beatBar");
+      bar.innerHTML = "";
+      for (let i = 0; i < 32; i++) {
+        const dot = document.createElement("div");
+        dot.className = "beat-dot" + (i % 4 === 0 ? " downbeat" : "");
+        dot.id = `beat-${i}`;
+        bar.appendChild(dot);
+      }
+    }
+
+    function updateBeatDisplayDirect(globalBeat) {
+      document.querySelectorAll(".beat-dot").forEach((d, i) => {
+        d.classList.toggle("active", i === globalBeat);
+      });
+    }
+
+    function clearBeatDisplay() {
+      document.querySelectorAll(".beat-dot").forEach(d => d.classList.remove("active"));
+    }
+
+    // ===================== PART TOGGLES =====================
+
+    function buildPartToggles() {
+      const container = document.getElementById("partsContainer");
+      for (const key in PARTS) {
+        const part = PARTS[key];
+        const div = document.createElement("div");
+        div.className = "part-toggle";
+        div.id = `toggle-${key}`;
+        div.innerHTML = `
+          <div class="indicator"></div>
+          <div>
+            <div class="part-name">${part.name}</div>
+            <div class="part-desc">${part.desc}</div>
+          </div>
+        `;
+        div.addEventListener("click", () => {
+          part.muted = !part.muted;
+          div.classList.toggle("muted", part.muted);
+        });
+        container.appendChild(div);
+      }
+    }
+
+    // ===================== LYRICS =====================
+
+    const LYRICS = [
+      { label: "Verse 1", lines: [
+        "When the night has come and the land is dark",
+        "Y la luna es la luz que brilla ante m\u00ed",
+        "Miedo no, no tendr\u00e9, oh, I won't, no me asustar\u00e9",
+        "Just as long as you stand, stand by me"
+      ]},
+      { label: "Chorus", lines: [
+        "And darling, darling, stand by me",
+        "Oh, stand by me",
+        "Oh, stand, junto a m\u00ed (junto a m\u00ed)",
+        "Junto a m\u00ed"
+      ]},
+      { label: "Verse 2", lines: [
+        "Y aunque las monta\u00f1as o el cielo caiga",
+        "No voy a preocuparme",
+        "Porque s\u00e9 (porque s\u00e9) que t\u00fa est\u00e1s (que t\u00fa est\u00e1s)",
+        "Junto a m\u00ed"
+      ]},
+      { label: "Verse 3", lines: [
+        "No llorar\u00e9, no llorar\u00e9",
+        "Oh, I won't shed a tear",
+        "Porque s\u00e9 (porque s\u00e9) que t\u00fa est\u00e1s (que t\u00fa est\u00e1s)",
+        "Junto a m\u00ed"
+      ]},
+      { label: "Chorus 2", lines: [
+        "And darling, darling, stand by me",
+        "Oh, stand by me",
+        "Oh, stand",
+        "Stand by me, stand by me"
+      ]},
+      { label: "Break", lines: [
+        "(64 Beat Instrumental Interlude)"
+      ]},
+      { label: "Final Chorus", lines: [
+        "And darling, darling, stand by me",
+        "Oh, stand by me",
+        "Oh, stand, junto a m\u00ed, junto a m\u00ed",
+        "And darling, darling, stand by me (by me)",
+        "Oh, stand by me (by me)",
+        "Oh, stand, junto a m\u00ed, junto a m\u00ed"
+      ]},
+      { label: "Outro", lines: [
+        "And darling, darling, stand by me",
+        "Oh, stand by me",
+        "Oh, stand, junto a m\u00ed, junto a m\u00ed"
+      ]}
+    ];
+
+    let autoAdvance = false;
+    let currentLyricsIndex = 0;
+    let autoAdvanceTimer = null;
+
+    function buildLyricsTabs() {
+      const tabs = document.getElementById("lyricsTabs");
+
+      // Auto-advance button first
+      const autoBtn = document.createElement("button");
+      autoBtn.textContent = "Auto Advance";
+      autoBtn.className = "auto-advance";
+      autoBtn.id = "autoAdvanceBtn";
+      autoBtn.addEventListener("click", toggleAutoAdvance);
+      tabs.appendChild(autoBtn);
+
+      LYRICS.forEach((section, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = section.label;
+        btn.dataset.index = i;
+        btn.addEventListener("click", () => {
+          showLyricsSection(i);
+          if (autoAdvance) stopAutoAdvance();
+        });
+        tabs.appendChild(btn);
+      });
+    }
+
+    function showLyricsSection(index) {
+      currentLyricsIndex = index;
+      const section = LYRICS[index];
+      const display = document.getElementById("lyricsDisplay");
+
+      // Update active tab (skip auto-advance button at index 0)
+      document.querySelectorAll(".lyrics-tabs button[data-index]").forEach((btn) => {
+        btn.classList.toggle("active", parseInt(btn.dataset.index) === index);
+      });
+
+      display.innerHTML =
+        `<div class="section-title">[${section.label}]</div><br>` +
+        section.lines.join("<br>");
+    }
+
+    function toggleAutoAdvance() {
+      if (autoAdvance) {
+        stopAutoAdvance();
+      } else {
+        startAutoAdvance();
+      }
+    }
+
+    function startAutoAdvance() {
+      autoAdvance = true;
+      document.getElementById("autoAdvanceBtn").classList.add("active");
+      showLyricsSection(0);
+      scheduleNextSection();
+    }
+
+    function stopAutoAdvance() {
+      autoAdvance = false;
+      document.getElementById("autoAdvanceBtn").classList.remove("active");
+      if (autoAdvanceTimer) {
+        clearTimeout(autoAdvanceTimer);
+        autoAdvanceTimer = null;
+      }
+    }
+
+    function scheduleNextSection() {
+      if (!autoAdvance) return;
+      // Advance every 8 measures (32 beats) based on current tempo
+      const beatsPerSection = 32;
+      const msPerBeat = (60 / Tone.Transport.bpm.value) * 1000;
+      const interval = beatsPerSection * msPerBeat;
+
+      autoAdvanceTimer = setTimeout(() => {
+        if (!autoAdvance) return;
+        const next = (currentLyricsIndex + 1) % LYRICS.length;
+        showLyricsSection(next);
+        scheduleNextSection();
+      }, interval);
+    }
+
+    // ===================== INIT =====================
+    buildBeatBar();
+    buildPartToggles();
+    buildLyricsTabs();
+    Tone.Transport.bpm.value = 120;
+  </script>
+</body>
+</html>

@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stand By Me — Prince Royce | Sheet Viewer</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Coming+Soon&family=Patrick+Hand&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Patrick Hand', 'Comic Sans MS', cursive;
+      background: #f5f5f5;
+      color: #222;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    /* ---------- CONTROLS (hidden on print) ---------- */
+    .controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .controls button {
+      font-family: 'Patrick Hand', cursive;
+      font-size: 1.1rem;
+      padding: 10px 22px;
+      border: 2px solid #222;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .controls button:hover { background: #e0e0e0; }
+    .controls button.active { background: #222; color: #fff; }
+
+    .controls .reload-hint {
+      font-size: 0.8rem;
+      color: #888;
+      width: 100%;
+      text-align: center;
+    }
+
+    /* ---------- PAGE (the printable area) ---------- */
+    .page {
+      width: 8.5in;
+      height: 11in;
+      background: #fff;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      padding: 0.35in 0.5in 0.35in 0.5in;
+      overflow: hidden;
+    }
+
+    /* Lyric sheet uses a special single-page layout */
+    .page.lyrics-layout {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Chord sheets can overflow / multi-page */
+    .page.chords-layout {
+      height: auto;
+      min-height: 11in;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto 1fr;
+      gap: 0 0.4in;
+    }
+
+    /* ---------- HEADER ---------- */
+    .page-header {
+      text-align: center;
+      border-bottom: 3px solid #222;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+
+    .chords-layout .page-header {
+      grid-column: 1 / -1;
+    }
+
+    .page-header h1 {
+      font-family: 'Coming Soon', 'Comic Sans MS', cursive;
+      font-size: 1.5rem;
+      letter-spacing: 1px;
+    }
+
+    .page-header .subtitle {
+      font-size: 0.9rem;
+      color: #555;
+    }
+
+    /* ---------- LYRIC SHEET: two-column lyrics + vocab below right ---------- */
+    .lyrics-body {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr auto;
+      gap: 0 0.3in;
+    }
+
+    .lyrics-col-left {
+      font-size: 1.25rem;
+      line-height: 1.35;
+    }
+
+    .lyrics-col-right {
+      font-size: 1.25rem;
+      line-height: 1.35;
+    }
+
+    .vocab-section {
+      grid-column: 1 / -1;
+      border-top: 2px solid #222;
+      padding-top: 6px;
+      margin-top: 8px;
+    }
+
+    .vocab-section .vocab-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 0 0.3in;
+    }
+
+    .vocab-section h3 {
+      font-family: 'Coming Soon', cursive;
+      font-size: 0.9rem;
+      margin-bottom: 4px;
+    }
+
+    /* ---------- SHARED LYRIC STYLES ---------- */
+    .section-label {
+      font-weight: bold;
+      font-size: 1.25rem;
+      margin-top: 6px;
+      margin-bottom: 1px;
+      border-bottom: 1px dashed #aaa;
+      display: inline-block;
+    }
+
+    .section-label:first-child {
+      margin-top: 0;
+    }
+
+    .lyric-line {
+      margin: 0;
+      padding: 0;
+    }
+
+    .lyric-line em {
+      font-style: italic;
+      color: #555;
+    }
+
+    .chord-line {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      font-size: 0.75rem;
+      color: #222;
+      margin: 0;
+      padding: 0;
+      line-height: 1.2;
+      white-space: pre;
+    }
+
+    .section-gap {
+      height: 3px;
+    }
+
+    /* ---------- CHORDS LAYOUT COLUMNS ---------- */
+    .chords-lyrics-col {
+      font-family: 'Courier New', monospace;
+      font-size: 0.75rem;
+      line-height: 1.4;
+    }
+
+    .chords-lyrics-col .chord-line {
+      font-family: 'Courier New', monospace;
+      font-weight: bold;
+      color: #222;
+      margin: 0;
+      padding: 0;
+      line-height: 1.2;
+      white-space: pre;
+    }
+
+    .chords-lyrics-col .lyric-line {
+      white-space: pre;
+      margin: 0;
+      padding: 0;
+    }
+
+    .chords-sidebar-col {
+      border-left: 2px solid #222;
+      padding-left: 16px;
+      font-size: 0.8rem;
+      min-width: 180px;
+    }
+
+    .chords-sidebar-col h3 {
+      font-family: 'Coming Soon', cursive;
+      font-size: 1rem;
+      margin-bottom: 8px;
+      border-bottom: 2px solid #222;
+      padding-bottom: 4px;
+    }
+
+    /* Vocab table */
+    .vocab-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .vocab-table th {
+      text-align: left;
+      border-bottom: 2px solid #222;
+      padding: 1px 3px;
+      font-size: 0.88rem;
+    }
+
+    .vocab-table td {
+      padding: 1px 3px;
+      border-bottom: 1px dotted #bbb;
+    }
+
+    .vocab-table tr:last-child td { border-bottom: none; }
+
+    /* Chord diagrams */
+    .chord-diagrams {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    .chord-box {
+      text-align: center;
+    }
+
+    .chord-box .chord-name {
+      font-family: 'Coming Soon', cursive;
+      font-weight: bold;
+      font-size: 1rem;
+      margin-bottom: 4px;
+    }
+
+    .chord-grid {
+      display: inline-block;
+    }
+
+    .chord-grid canvas {
+      display: block;
+    }
+
+    /* ---------- PRINT STYLES ---------- */
+    @media print {
+      body {
+        background: #fff;
+        padding: 0;
+      }
+
+      .controls { display: none !important; }
+
+      .page {
+        border: none;
+        border-radius: 0;
+        width: 100%;
+        padding: 0.25in 0.45in;
+      }
+
+      .page.lyrics-layout {
+        height: auto;
+        max-height: 10.5in;
+        overflow: hidden;
+      }
+
+      @page {
+        size: letter portrait;
+        margin: 0.25in;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button id="btn-lyrics" class="active" onclick="showView('lyrics')">Lyric Sheet</button>
+    <button id="btn-chords-a" onclick="showView('chords-a')">Chords (Key of A)</button>
+    <button id="btn-chords-c" onclick="showView('chords-c')">Chords (Key of C)</button>
+    <button id="btn-reload" onclick="reloadAll()">Reload Files</button>
+    <button id="btn-print" onclick="window.print()">Print / Save PDF</button>
+    <div class="reload-hint">Edit the .md files and click "Reload Files" to see changes</div>
+  </div>
+
+  <!-- PRINTABLE PAGE -->
+  <div class="page" id="page">
+    <!-- filled by JS -->
+  </div>
+
+  <script>
+    // ===================== FILE PATHS =====================
+
+    const FILES = {
+      lyrics:   "Stand_By_Me_Lyric_Sheet.md",
+      chordsA:  "Stand_By_Me_Chords.md",
+      chordsC:  "Stand_By_Me_Chords_C.md"
+    };
+
+    // ===================== PARSED DATA CACHE =====================
+
+    let cache = { lyrics: null, chordsA: null, chordsC: null };
+    let currentView = "lyrics";
+
+    // ===================== MARKDOWN PARSERS =====================
+
+    function parseLyricsMd(text) {
+      const lines = text.split("\n");
+      const data = { title: "", subtitle: "", sections: [], vocab: [] };
+
+      // Title from first # line
+      const titleLine = lines.find(l => /^# /.test(l));
+      if (titleLine) data.title = titleLine.replace(/^# /, "").trim();
+
+      // Subtitle from ### line
+      const subLine = lines.find(l => /^### /.test(l));
+      if (subLine) data.subtitle = subLine.replace(/^### /, "").trim();
+
+      let currentSection = null;
+      let inVocabTable = false;
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Detect section headers: ## [Something] or ## Something
+        const bracketMatch = line.match(/^## \[(.+)\]\s*$/);
+        const plainMatch = line.match(/^## (.+)$/);
+
+        if (bracketMatch || plainMatch) {
+          const label = bracketMatch ? bracketMatch[1] : plainMatch[1];
+
+          // Check if this is the vocab key
+          if (/vocab/i.test(label)) {
+            inVocabTable = true;
+            currentSection = null;
+            continue;
+          }
+
+          inVocabTable = false;
+          currentSection = { label: label, lines: [] };
+          data.sections.push(currentSection);
+          continue;
+        }
+
+        // Skip top-level headers and horizontal rules
+        if (/^#{1,1} /.test(line) || /^### /.test(line) || /^---/.test(line)) continue;
+
+        // Vocab table rows
+        if (inVocabTable) {
+          const rowMatch = line.match(/^\|\s*(.+?)\s*\|\s*(.+?)\s*\|?\s*$/);
+          if (rowMatch && !/^[-|]+$/.test(line) && !/Español|Spanish|English/i.test(line)) {
+            data.vocab.push([rowMatch[1].trim(), rowMatch[2].trim()]);
+          }
+          continue;
+        }
+
+        // Lyric lines within a section
+        if (currentSection && line.trim() !== "") {
+          currentSection.lines.push(line);
+        }
+      }
+
+      return data;
+    }
+
+    function parseChordsMd(text) {
+      const lines = text.split("\n");
+      const data = { title: "", subtitle: "", chords: [], sections: [] };
+
+      const titleLine = lines.find(l => /^# /.test(l));
+      if (titleLine) data.title = titleLine.replace(/^# /, "").trim();
+
+      const subLine = lines.find(l => /^### /.test(l));
+      if (subLine) {
+        data.subtitle = subLine.replace(/^### /, "").trim();
+        const chordMatch = subLine.match(/Chords:\s*(.+)/);
+        if (chordMatch) {
+          data.chords = chordMatch[1].trim().split(/\s{2,}/).map(c => c.trim());
+        }
+      }
+
+      let currentSection = null;
+      let inCodeBlock = false;
+      let codeLines = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        const sectionMatch = line.match(/^## \[(.+)\]\s*$/);
+        if (sectionMatch) {
+          currentSection = { label: sectionMatch[1], lines: [] };
+          data.sections.push(currentSection);
+          continue;
+        }
+
+        if (line.trim() === "```") {
+          if (inCodeBlock) {
+            if (currentSection) {
+              processChordCodeBlock(codeLines, currentSection);
+            }
+            codeLines = [];
+            inCodeBlock = false;
+          } else {
+            inCodeBlock = true;
+          }
+          continue;
+        }
+
+        if (inCodeBlock) {
+          codeLines.push(line);
+        }
+      }
+
+      return data;
+    }
+
+    function processChordCodeBlock(codeLines, section) {
+      const isChordLine = (line) => {
+        if (line.trim() === "") return false;
+        const stripped = line.replace(/\b([A-G][#b]?(?:m|maj|min|dim|aug|sus[24]?|add\d+|7|9|11|13)?)\b/g, "")
+                             .replace(/\(x\d+\)/g, "");
+        const nonSpace = stripped.replace(/\s/g, "");
+        return nonSpace.length <= 2;
+      };
+
+      let i = 0;
+      while (i < codeLines.length) {
+        const line = codeLines[i];
+
+        if (line.trim() === "") {
+          section.lines.push({ chord: null, text: "" });
+          i++;
+          continue;
+        }
+
+        if (isChordLine(line)) {
+          if (i + 1 < codeLines.length && !isChordLine(codeLines[i + 1]) && codeLines[i + 1].trim() !== "") {
+            section.lines.push({ chord: line, text: codeLines[i + 1] });
+            i += 2;
+          } else {
+            section.lines.push({ chord: line, text: null });
+            i++;
+          }
+        } else {
+          section.lines.push({ chord: null, text: line });
+          i++;
+        }
+      }
+    }
+
+    // ===================== FETCH & RELOAD =====================
+
+    async function fetchFile(path) {
+      const resp = await fetch(path + "?t=" + Date.now());
+      if (!resp.ok) throw new Error(`Failed to load ${path}: ${resp.status}`);
+      return resp.text();
+    }
+
+    async function reloadAll() {
+      try {
+        const [lyricsText, chordsAText, chordsCText] = await Promise.all([
+          fetchFile(FILES.lyrics),
+          fetchFile(FILES.chordsA),
+          fetchFile(FILES.chordsC)
+        ]);
+
+        cache.lyrics = parseLyricsMd(lyricsText);
+        cache.chordsA = parseChordsMd(chordsAText);
+        cache.chordsC = parseChordsMd(chordsCText);
+
+        showView(currentView);
+      } catch (e) {
+        console.error(e);
+        alert("Error loading files: " + e.message + "\n\nMake sure you're serving via a local server (e.g. python3 -m http.server)");
+      }
+    }
+
+    // ===================== CHORD DIAGRAM DRAWING =====================
+
+    // Guitar: 6 strings [E A D G B e], null = muted, 0 = open
+    const GUITAR_SHAPES = {
+      "A":   [null, 0, 2, 2, 2, 0],
+      "F#m": [2, 4, 4, 2, 2, 2],
+      "D":   [null, null, 0, 2, 3, 2],
+      "E":   [0, 2, 2, 1, 0, 0],
+      "C":   [null, 3, 2, 0, 1, 0],
+      "Am":  [null, 0, 2, 2, 1, 0],
+      "F":   [1, 3, 3, 2, 1, 1],
+      "G":   [3, 2, 0, 0, 0, 3]
+    };
+
+    // Ukulele: 4 strings [G C E A]
+    const UKE_SHAPES = {
+      "A":   [2, 1, 0, 0],
+      "F#m": [2, 1, 2, 0],
+      "D":   [2, 2, 2, 0],
+      "E":   [1, 4, 0, 2],
+      "C":   [0, 0, 0, 3],
+      "Am":  [2, 0, 0, 0],
+      "F":   [2, 0, 1, 0],
+      "G":   [0, 2, 3, 2]
+    };
+
+    const DOT_COLORS = {
+      "F":   "#c04040",
+      "Am":  "#c04040",
+      "F#m": "#c04040",
+      "C":   "#3565a0",
+      "G":   "#b8960a"
+    };
+
+    function drawChordDiagram(canvas, name, shapes, numStrings) {
+      const frets = shapes[name];
+      if (!frets) return;
+      const dotColor = numStrings === 4 ? (DOT_COLORS[name] || "#222") : "#222";
+
+      const ctx = canvas.getContext("2d");
+      const w = numStrings === 4 ? 50 : 70;
+      const h = 84;
+      canvas.width = w;
+      canvas.height = h;
+      ctx.clearRect(0, 0, w, h);
+
+      const topY = 16, fretCount = 4;
+      const padding = numStrings === 4 ? 8 : 10;
+      const stringGap = (w - padding * 2) / (numStrings - 1);
+      const fretGap = (h - topY - 8) / fretCount;
+      const leftX = padding;
+
+      // Nut
+      ctx.fillStyle = "#222";
+      ctx.fillRect(leftX, topY, (numStrings - 1) * stringGap, 3);
+
+      // Fret lines
+      ctx.strokeStyle = "#222";
+      ctx.lineWidth = 1;
+      for (let f = 1; f <= fretCount; f++) {
+        const y = topY + f * fretGap;
+        ctx.beginPath();
+        ctx.moveTo(leftX, y);
+        ctx.lineTo(leftX + (numStrings - 1) * stringGap, y);
+        ctx.stroke();
+      }
+
+      // String lines
+      for (let s = 0; s < numStrings; s++) {
+        const x = leftX + s * stringGap;
+        ctx.beginPath();
+        ctx.moveTo(x, topY);
+        ctx.lineTo(x, topY + fretCount * fretGap);
+        ctx.stroke();
+      }
+
+      // Offset for barre chords
+      const activeFrets = frets.filter(f => f !== null && f > 0);
+      const minFret = activeFrets.length > 0 ? Math.min(...activeFrets) : 1;
+      const maxFret = activeFrets.length > 0 ? Math.max(...activeFrets) : 1;
+      const offset = maxFret > fretCount ? minFret - 1 : 0;
+
+      if (offset > 0) {
+        ctx.font = "bold 10px 'Patrick Hand', sans-serif";
+        ctx.fillStyle = "#222";
+        ctx.textAlign = "right";
+        ctx.fillText(`${offset + 1}`, leftX - 3, topY + fretGap / 2 + 4);
+      }
+
+      for (let s = 0; s < numStrings; s++) {
+        const x = leftX + s * stringGap;
+        const f = frets[s];
+
+        if (f === null) {
+          ctx.font = "bold 10px sans-serif";
+          ctx.textAlign = "center";
+          ctx.fillStyle = "#222";
+          ctx.fillText("x", x, topY - 4);
+        } else if (f === 0) {
+          ctx.beginPath();
+          ctx.arc(x, topY - 6, 4, 0, Math.PI * 2);
+          ctx.strokeStyle = "#222";
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        } else {
+          const displayFret = f - offset;
+          const y = topY + (displayFret - 0.5) * fretGap;
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fillStyle = dotColor;
+          ctx.fill();
+        }
+      }
+    }
+
+    // ===================== RENDER =====================
+
+    function showView(view) {
+      currentView = view;
+      document.querySelectorAll('.controls button:not(#btn-print):not(#btn-reload)').forEach(b => b.classList.remove('active'));
+      document.getElementById(`btn-${view}`).classList.add('active');
+
+      const page = document.getElementById("page");
+
+      if (view === "lyrics" && cache.lyrics) {
+        renderLyricsView(page, cache.lyrics);
+      } else if (view === "chords-a" && cache.chordsA) {
+        renderChordsView(page, cache.chordsA);
+      } else if (view === "chords-c" && cache.chordsC) {
+        renderChordsView(page, cache.chordsC);
+      }
+    }
+
+    function renderLyricsView(page, data) {
+      page.className = "page lyrics-layout";
+
+      // Split sections roughly in half for two columns
+      const sections = data.sections;
+      const totalLines = sections.reduce((sum, s) => sum + s.lines.length + 2, 0);
+      let leftSections = [];
+      let rightSections = [];
+      let count = 0;
+      const half = totalLines / 2;
+
+      for (const sec of sections) {
+        const secLines = sec.lines.length + 2; // +2 for label + gap
+        if (count < half) {
+          leftSections.push(sec);
+        } else {
+          rightSections.push(sec);
+        }
+        count += secLines;
+      }
+
+      function renderSections(secs) {
+        let html = "";
+        for (const sec of secs) {
+          html += `<div class="section-gap"></div>`;
+          html += `<div class="section-label">[${escapeHtml(sec.label)}]</div>`;
+          if (sec.lines.length === 0) {
+            html += `<div class="lyric-line"><em>(instrumental)</em></div>`;
+          }
+          for (const line of sec.lines) {
+            html += `<div class="lyric-line">${escapeHtml(line)}</div>`;
+          }
+        }
+        return html;
+      }
+
+      // Vocab table
+      let vocabRows = data.vocab.map(([es, en]) =>
+        `<tr><td><strong>${escapeHtml(es)}</strong></td><td>${escapeHtml(en)}</td></tr>`
+      ).join("");
+
+      // Split vocab into 3 columns
+      let vocabHTML = "";
+      if (data.vocab.length > 0) {
+        const colSize = Math.ceil(data.vocab.length / 3);
+        let colsHTML = "";
+        for (let c = 0; c < 3; c++) {
+          const slice = data.vocab.slice(c * colSize, (c + 1) * colSize);
+          const rows = slice.map(([es, en]) =>
+            `<tr><td><strong>${escapeHtml(es)}</strong></td><td>${escapeHtml(en)}</td></tr>`
+          ).join("");
+          colsHTML += `<table class="vocab-table"><tr><th>Español</th><th>English</th></tr>${rows}</table>`;
+        }
+        vocabHTML = `
+          <div class="vocab-section">
+            <h3>Spanish Vocabulary</h3>
+            <div class="vocab-grid">${colsHTML}</div>
+          </div>`;
+      }
+
+      page.innerHTML = `
+        <div class="page-header">
+          <h1>${escapeHtml(data.title)}</h1>
+          <div class="subtitle">${escapeHtml(data.subtitle)}</div>
+        </div>
+        <div class="lyrics-body">
+          <div class="lyrics-col-left">${renderSections(leftSections)}</div>
+          <div class="lyrics-col-right">${renderSections(rightSections)}</div>
+          ${vocabHTML}
+        </div>
+      `;
+    }
+
+    function renderChordsView(page, data) {
+      page.className = "page chords-layout";
+
+      let lyricsHTML = "";
+      for (const sec of data.sections) {
+        lyricsHTML += `<div class="section-gap"></div>`;
+        lyricsHTML += `<div class="section-label">[${escapeHtml(sec.label)}]</div>`;
+        for (const item of sec.lines) {
+          if (item.chord) {
+            lyricsHTML += `<div class="chord-line">${escapeHtml(item.chord)}</div>`;
+          }
+          if (item.text !== null && item.text !== "") {
+            lyricsHTML += `<div class="lyric-line">${escapeHtml(item.text)}</div>`;
+          }
+        }
+      }
+
+      // Ukulele diagrams
+      let ukeHTML = "";
+      for (const ch of data.chords) {
+        if (UKE_SHAPES[ch]) {
+          ukeHTML += `
+            <div class="chord-box">
+              <div class="chord-name">${ch}</div>
+              <div class="chord-grid"><canvas data-chord="${ch}" data-instrument="uke"></canvas></div>
+            </div>`;
+        }
+      }
+
+      // Guitar diagrams
+      let guitarHTML = "";
+      for (const ch of data.chords) {
+        if (GUITAR_SHAPES[ch]) {
+          guitarHTML += `
+            <div class="chord-box">
+              <div class="chord-name">${ch}</div>
+              <div class="chord-grid"><canvas data-chord="${ch}" data-instrument="guitar"></canvas></div>
+            </div>`;
+        }
+      }
+
+      page.innerHTML = `
+        <div class="page-header">
+          <h1>${escapeHtml(data.title)}</h1>
+          <div class="subtitle">${escapeHtml(data.subtitle)}</div>
+        </div>
+        <div class="chords-lyrics-col">${lyricsHTML}</div>
+        <div class="chords-sidebar-col">
+          <h3>Ukulele Chords</h3>
+          <div class="chord-diagrams">${ukeHTML}</div>
+          <h3 style="margin-top: 16px;">Guitar Chords</h3>
+          <div class="chord-diagrams">${guitarHTML}</div>
+        </div>
+      `;
+
+      page.querySelectorAll("canvas[data-instrument='uke']").forEach(c => {
+        drawChordDiagram(c, c.dataset.chord, UKE_SHAPES, 4);
+      });
+      page.querySelectorAll("canvas[data-instrument='guitar']").forEach(c => {
+        drawChordDiagram(c, c.dataset.chord, GUITAR_SHAPES, 6);
+      });
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ===================== INIT =====================
+    reloadAll();
+  </script>
+</body>
+</html>
