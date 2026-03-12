@@ -100,10 +100,17 @@
       border-radius: 50%;
       border: 2px solid #222;
       background: #fff;
-      transition: background 0.05s;
+      transition: background 0.05s, color 0.05s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.55rem;
+      font-weight: bold;
+      color: #888;
+      line-height: 1;
     }
 
-    .beat-dot.active { background: #222; }
+    .beat-dot.active { background: #222; color: #fff; }
     .beat-dot.downbeat { border-width: 3px; }
 
     .measure-display {
@@ -648,6 +655,7 @@
         const dot = document.createElement("div");
         dot.className = "beat-dot" + (i % 4 === 0 ? " downbeat" : "");
         dot.id = `beat-${i}`;
+        dot.textContent = (i % 4) + 1;
         bar.appendChild(dot);
       }
     }
@@ -691,7 +699,9 @@
     const LYRICS = [
       { label: "Verse 1", lines: [
         "When the night has come and the land is dark",
-        "Y la luna es la luz que brilla ante m\u00ed",
+        "Y la luna es la luz que brilla ante m\u00ed"
+      ]},
+      { label: "Verse 2", lines: [
         "Miedo no, no tendr\u00e9, oh, I won't, no me asustar\u00e9",
         "Just as long as you stand, stand by me"
       ]},
@@ -701,13 +711,13 @@
         "Oh, stand, junto a m\u00ed (junto a m\u00ed)",
         "Junto a m\u00ed"
       ]},
-      { label: "Verse 2", lines: [
+      { label: "Verse 3", lines: [
         "Y aunque las monta\u00f1as o el cielo caiga",
         "No voy a preocuparme",
         "Porque s\u00e9 (porque s\u00e9) que t\u00fa est\u00e1s (que t\u00fa est\u00e1s)",
         "Junto a m\u00ed"
       ]},
-      { label: "Verse 3", lines: [
+      { label: "Verse 4", lines: [
         "No llorar\u00e9, no llorar\u00e9",
         "Oh, I won't shed a tear",
         "Porque s\u00e9 (porque s\u00e9) que t\u00fa est\u00e1s (que t\u00fa est\u00e1s)",
@@ -805,8 +815,8 @@
 
     function scheduleNextSection() {
       if (!autoAdvance) return;
-      // Advance every 8 measures (32 beats) based on current tempo
-      const beatsPerSection = 32;
+      // Advance 2 beats before the section ends (at beat 30 of 32)
+      const beatsPerSection = 32 - 2;
       const msPerBeat = (60 / Tone.Transport.bpm.value) * 1000;
       const interval = beatsPerSection * msPerBeat;
 
