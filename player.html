@@ -295,7 +295,7 @@
   <!-- HEADER -->
   <div class="header">
     <h1>Stand By Me — Ostinato Player</h1>
-    <div class="subtitle">Prince Royce | Key of C</div>
+    <div class="subtitle">Prince Royce | <span id="keyDisplay">Key of C</span></div>
   </div>
 
   <!-- TRANSPORT BAR -->
@@ -314,6 +314,7 @@
     <label class="loop-toggle">
       <input type="checkbox" id="loopCheck" checked> Loop
     </label>
+    <button id="transposeBtn" onclick="toggleTranspose()">Key: C</button>
   </div>
 
   <!-- MAIN: instruments left, lyrics right -->
@@ -332,6 +333,25 @@
   </div>
 
   <script>
+    // ===================== TRANSPOSE =====================
+
+    let transposeOffset = 0; // 0 = Key of C, -3 = Key of A
+
+    function tn(note) {
+      if (transposeOffset === 0) return note;
+      return Tone.Frequency(note).transpose(transposeOffset).toNote();
+    }
+
+    function toggleTranspose() {
+      const wasPlaying = isPlaying;
+      if (wasPlaying) stopAll();
+      transposeOffset = transposeOffset === 0 ? -3 : 0;
+      const keyLabel = transposeOffset === 0 ? "C" : "A";
+      document.getElementById("transposeBtn").textContent = "Key: " + keyLabel;
+      document.getElementById("keyDisplay").textContent = "Key of " + keyLabel;
+      if (wasPlaying) startPlay();
+    }
+
     // ===================== PART DEFINITIONS =====================
 
     const PARTS = {
@@ -425,7 +445,7 @@
           const eighth = Tone.Time("8n").toSeconds();
           const notes = this.measures[measure];
           for (const [note, dur, pos] of notes) {
-            this.synth.triggerAttackRelease(note, dur, time + eighth * pos);
+            this.synth.triggerAttackRelease(tn(note), dur, time + eighth * pos);
           }
         }
       },
@@ -483,13 +503,13 @@
         }).connect(ukeGain);
         ukeStrings.push(s);
       }
-      // Strum a C chord across 4 strings with slight delay
+      // Strum chord across 4 strings with slight delay
       PARTS.ukulele.synth = {
         triggerAttackRelease: function(note, dur, time, vel) {
           const chordNotes = ["G4", "C4", "E4", "C5"];
           const strumDelay = 0.012;
           chordNotes.forEach((n, i) => {
-            ukeStrings[i].triggerAttackRelease(n, "32n", time + strumDelay * i);
+            ukeStrings[i].triggerAttackRelease(tn(n), "32n", time + strumDelay * i);
           });
         }
       };
