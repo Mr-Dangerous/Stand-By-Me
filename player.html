@@ -614,12 +614,16 @@
 
         // Auto-advance lyrics — advance earlier (beat 27) if next section is a chorus
         if (autoAdvance) {
-          const next = (currentLyricsIndex + 1) % LYRICS.length;
-          const nextLabel = LYRICS[next].label.toLowerCase();
-          const isNextChorus = nextLabel.includes("chorus");
-          const advanceBeat = isNextChorus ? 27 : 30;
-          if (globalBeat === advanceBeat) {
-            setTimeout(() => showLyricsSection(next), delay);
+          if (globalBeat === 0) autoAdvancedThisLoop = false;
+          if (!autoAdvancedThisLoop) {
+            const next = (currentLyricsIndex + 1) % LYRICS.length;
+            const nextLabel = LYRICS[next].label.toLowerCase();
+            const isNextChorus = nextLabel.includes("chorus");
+            const advanceBeat = isNextChorus ? 27 : 30;
+            if (globalBeat === advanceBeat) {
+              autoAdvancedThisLoop = true;
+              setTimeout(() => showLyricsSection(next), delay);
+            }
           }
         }
 
@@ -767,6 +771,7 @@
 
     let autoAdvance = false;
     let currentLyricsIndex = 0;
+    let autoAdvancedThisLoop = false;
 
     function buildLyricsTabs() {
       const tabs = document.getElementById("lyricsTabs");
