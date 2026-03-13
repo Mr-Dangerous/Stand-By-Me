@@ -69,6 +69,16 @@
     .transport-bar button:active { background: #e0e0e0; }
     .transport-bar button.playing { background: #222; color: #fff; }
 
+    .skip-btn {
+      background: #d4a017 !important;
+      color: #222 !important;
+      border-color: #d4a017 !important;
+      font-weight: bold;
+    }
+    .skip-btn:hover, .skip-btn:active {
+      background: #b8860b !important;
+    }
+
     .tempo-control {
       display: flex;
       align-items: center;
@@ -280,8 +290,10 @@
 
   <!-- TRANSPORT BAR -->
   <div class="transport-bar">
+    <button id="skipPrevBtn" class="skip-btn" onclick="skipSection(-1)" style="display:none;">&larr; Prev</button>
     <button id="playBtn" onclick="togglePlay()">Play</button>
     <button onclick="stopAll()">Stop</button>
+    <button id="skipNextBtn" class="skip-btn" onclick="skipSection(1)" style="display:none;">Next &rarr;</button>
     <div class="tempo-control">
       <span>Tempo:</span>
       <input type="range" id="tempoSlider" min="60" max="180" value="128" oninput="setTempo(this.value)">
@@ -825,14 +837,35 @@
         stopAll();
       }
       autoAdvance = true;
+      autoAdvancedThisLoop = false;
       document.getElementById("autoAdvanceBtn").classList.add("active");
+      document.getElementById("skipPrevBtn").style.display = "";
+      document.getElementById("skipNextBtn").style.display = "";
       showLyricsSection(0);
       startPlay();
     }
 
     function stopAutoAdvance() {
       autoAdvance = false;
+      autoAdvancedThisLoop = false;
       document.getElementById("autoAdvanceBtn").classList.remove("active");
+      document.getElementById("skipPrevBtn").style.display = "none";
+      document.getElementById("skipNextBtn").style.display = "none";
+    }
+
+    function skipSection(direction) {
+      const next = Math.max(0, Math.min(LYRICS.length - 1, currentLyricsIndex + direction));
+      if (next === currentLyricsIndex) return;
+      stopAll();
+      showLyricsSection(next);
+      autoAdvance = true;
+      autoAdvancedThisLoop = false;
+      document.getElementById("autoAdvanceBtn").classList.add("active");
+      document.getElementById("skipPrevBtn").style.display = "";
+      document.getElementById("skipNextBtn").style.display = "";
+      setTimeout(() => {
+        startPlay();
+      }, 1000);
     }
 
     // ===================== INIT =====================
