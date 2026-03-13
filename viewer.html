@@ -771,6 +771,18 @@
     }
 
     // ===================== INIT =====================
+    // Support hash-based navigation: viewer.html#lyrics, #chords-a, #chords-c
+    function initFromHash() {
+      const hash = window.location.hash.replace('#', '');
+      if (['lyrics', 'chords-a', 'chords-c'].includes(hash)) {
+        currentView = hash;
+      }
+    }
+    initFromHash();
+    window.addEventListener('hashchange', () => {
+      initFromHash();
+      showView(currentView);
+    });
     reloadAll();
   </script>
 </body>
