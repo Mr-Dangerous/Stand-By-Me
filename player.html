@@ -612,16 +612,10 @@
             `Measure: ${measNum + 1} / 8`;
         }, delay);
 
-        // Auto-advance lyrics synced to beat count
-        if (autoAdvance) {
-          autoAdvanceBeatCount++;
-          const section = LYRICS[currentLyricsIndex];
-          const sectionBeats = (section && section.beats) || 32;
-          if (autoAdvanceBeatCount >= sectionBeats - 2) {
-            autoAdvanceBeatCount = 0;
-            const next = (currentLyricsIndex + 1) % LYRICS.length;
-            setTimeout(() => showLyricsSection(next), delay);
-          }
+        // Auto-advance lyrics on beat 30 of each 32-beat ostinato loop
+        if (autoAdvance && globalBeat === 30) {
+          const next = (currentLyricsIndex + 1) % LYRICS.length;
+          setTimeout(() => showLyricsSection(next), delay);
         }
 
         // Advance
@@ -768,7 +762,6 @@
 
     let autoAdvance = false;
     let currentLyricsIndex = 0;
-    let autoAdvanceBeatCount = 0;
 
     function buildLyricsTabs() {
       const tabs = document.getElementById("lyricsTabs");
@@ -817,15 +810,18 @@
     }
 
     function startAutoAdvance() {
+      // If already playing, stop and restart from the beginning
+      if (isPlaying) {
+        stopAll();
+      }
       autoAdvance = true;
-      autoAdvanceBeatCount = 0;
       document.getElementById("autoAdvanceBtn").classList.add("active");
       showLyricsSection(0);
+      startPlay();
     }
 
     function stopAutoAdvance() {
       autoAdvance = false;
-      autoAdvanceBeatCount = 0;
       document.getElementById("autoAdvanceBtn").classList.remove("active");
     }
 
