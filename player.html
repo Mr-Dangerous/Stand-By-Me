@@ -612,6 +612,18 @@
             `Measure: ${measNum + 1} / 8`;
         }, delay);
 
+        // Auto-advance lyrics synced to beat count
+        if (autoAdvance) {
+          autoAdvanceBeatCount++;
+          const section = LYRICS[currentLyricsIndex];
+          const sectionBeats = (section && section.beats) || 32;
+          if (autoAdvanceBeatCount >= sectionBeats - 2) {
+            autoAdvanceBeatCount = 0;
+            const next = (currentLyricsIndex + 1) % LYRICS.length;
+            setTimeout(() => showLyricsSection(next), delay);
+          }
+        }
+
         // Advance
         currentBeat++;
         if (currentBeat >= 4) {
@@ -756,7 +768,7 @@
 
     let autoAdvance = false;
     let currentLyricsIndex = 0;
-    let autoAdvanceTimer = null;
+    let autoAdvanceBeatCount = 0;
 
     function buildLyricsTabs() {
       const tabs = document.getElementById("lyricsTabs");
@@ -806,36 +818,15 @@
 
     function startAutoAdvance() {
       autoAdvance = true;
+      autoAdvanceBeatCount = 0;
       document.getElementById("autoAdvanceBtn").classList.add("active");
       showLyricsSection(0);
-      scheduleNextSection();
     }
 
     function stopAutoAdvance() {
       autoAdvance = false;
+      autoAdvanceBeatCount = 0;
       document.getElementById("autoAdvanceBtn").classList.remove("active");
-      if (autoAdvanceTimer) {
-        clearTimeout(autoAdvanceTimer);
-        autoAdvanceTimer = null;
-      }
-    }
-
-    function scheduleNextSection() {
-      if (!autoAdvance) return;
-      // Use per-section beat count if defined, default 32
-      const section = LYRICS[currentLyricsIndex];
-      const sectionBeats = (section && section.beats) || 32;
-      // Advance 2 beats before the section ends
-      const beatsToWait = sectionBeats - 2;
-      const msPerBeat = (60 / Tone.Transport.bpm.value) * 1000;
-      const interval = beatsToWait * msPerBeat;
-
-      autoAdvanceTimer = setTimeout(() => {
-        if (!autoAdvance) return;
-        const next = (currentLyricsIndex + 1) % LYRICS.length;
-        showLyricsSection(next);
-        scheduleNextSection();
-      }, interval);
     }
 
     // ===================== INIT =====================
