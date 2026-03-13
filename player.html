@@ -24,8 +24,8 @@
       display: grid;
       grid-template-rows: auto auto 1fr;
       grid-template-columns: 1fr;
-      padding: 16px 24px;
-      gap: 10px;
+      padding: 8px 16px;
+      gap: 6px;
     }
 
     /* ---------- HEADER ---------- */
@@ -35,12 +35,12 @@
 
     .header h1 {
       font-family: 'Coming Soon', cursive;
-      font-size: 2.2rem;
-      margin-bottom: 2px;
+      font-size: 1.4rem;
+      margin-bottom: 1px;
     }
 
     .header .subtitle {
-      font-size: 1.1rem;
+      font-size: 0.85rem;
       color: #555;
     }
 
@@ -49,16 +49,16 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 16px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
     .transport-bar button {
       font-family: 'Patrick Hand', cursive;
-      font-size: 1.4rem;
-      padding: 14px 36px;
-      border: 3px solid #222;
-      border-radius: 14px;
+      font-size: 1rem;
+      padding: 6px 20px;
+      border: 2px solid #222;
+      border-radius: 10px;
       background: #fff;
       cursor: pointer;
       transition: all 0.15s;
@@ -72,20 +72,21 @@
     .tempo-control {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 1.2rem;
+      gap: 6px;
+      font-size: 0.95rem;
     }
 
     .tempo-control input[type="range"] {
-      width: 180px;
-      height: 30px;
+      width: 120px;
+      height: 22px;
       accent-color: #222;
     }
 
     .tempo-display {
       font-weight: bold;
-      min-width: 80px;
+      min-width: 60px;
       text-align: center;
+      font-size: 0.95rem;
     }
 
     .beat-bar {
@@ -95,8 +96,8 @@
     }
 
     .beat-dot {
-      width: 20px;
-      height: 20px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       border: 2px solid #222;
       background: #fff;
@@ -104,37 +105,37 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.55rem;
+      font-size: 0.45rem;
       font-weight: bold;
       color: #888;
       line-height: 1;
     }
 
     .beat-dot.active { background: #222; color: #fff; }
-    .beat-dot.downbeat { border-width: 3px; }
+    .beat-dot.downbeat { border-width: 2.5px; }
 
     .measure-display {
-      font-size: 1.1rem;
+      font-size: 0.9rem;
       color: #555;
-      min-width: 120px;
+      min-width: 100px;
     }
 
     .loop-toggle {
-      font-size: 1.1rem;
+      font-size: 0.9rem;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       cursor: pointer;
       user-select: none;
     }
 
-    .loop-toggle input { accent-color: #222; width: 22px; height: 22px; }
+    .loop-toggle input { accent-color: #222; width: 18px; height: 18px; }
 
     /* ---------- MAIN CONTENT: two columns ---------- */
     .main-content {
       display: grid;
-      grid-template-columns: 320px 1fr;
-      gap: 20px;
+      grid-template-columns: 200px 1fr;
+      gap: 14px;
       overflow: hidden;
     }
 
@@ -142,13 +143,13 @@
     .instruments-panel {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 6px;
       overflow-y: auto;
     }
 
     .instruments-panel h2 {
       font-family: 'Coming Soon', cursive;
-      font-size: 1.3rem;
+      font-size: 1rem;
       text-align: center;
       flex-shrink: 0;
     }
@@ -156,10 +157,10 @@
     .part-toggle {
       display: flex;
       align-items: center;
-      gap: 14px;
-      padding: 16px 18px;
-      border: 3px solid #222;
-      border-radius: 12px;
+      gap: 8px;
+      padding: 8px 10px;
+      border: 2px solid #222;
+      border-radius: 8px;
       background: #fff;
       cursor: pointer;
       transition: all 0.15s;
@@ -172,10 +173,10 @@
     .part-toggle.muted { opacity: 0.3; background: #eee; }
 
     .part-toggle .indicator {
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
-      border: 3px solid #222;
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 2px solid #222;
       background: #222;
       flex-shrink: 0;
     }
@@ -183,12 +184,12 @@
     .part-toggle.muted .indicator { background: #fff; }
 
     .part-toggle .part-name {
-      font-size: 1.3rem;
+      font-size: 0.95rem;
       font-weight: bold;
     }
 
     .part-toggle .part-desc {
-      font-size: 0.9rem;
+      font-size: 0.75rem;
       color: #666;
     }
 
@@ -201,27 +202,27 @@
 
     .lyrics-panel h2 {
       font-family: 'Coming Soon', cursive;
-      font-size: 1.3rem;
+      font-size: 1rem;
       text-align: center;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       flex-shrink: 0;
     }
 
     .lyrics-tabs {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 5px;
       justify-content: center;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       flex-shrink: 0;
     }
 
     .lyrics-tabs button {
       font-family: 'Patrick Hand', cursive;
-      font-size: 1.15rem;
-      padding: 10px 18px;
-      border: 3px solid #222;
-      border-radius: 10px;
+      font-size: 0.9rem;
+      padding: 5px 12px;
+      border: 2px solid #222;
+      border-radius: 8px;
       background: #fff;
       cursor: pointer;
       transition: all 0.15s;
@@ -248,9 +249,9 @@
       background: #fff;
       border: 3px solid #222;
       border-radius: 14px;
-      padding: 24px 30px;
-      font-size: 1.8rem;
-      line-height: 1.7;
+      padding: 30px 40px;
+      font-size: 2.4rem;
+      line-height: 1.8;
       text-align: center;
       overflow-y: auto;
       display: flex;
@@ -261,7 +262,7 @@
     .lyrics-display .section-title {
       font-family: 'Coming Soon', cursive;
       font-weight: bold;
-      font-size: 1.3rem;
+      font-size: 1.5rem;
       color: #555;
       margin-bottom: 10px;
       border-bottom: 2px dashed #aaa;
@@ -283,8 +284,8 @@
     <button onclick="stopAll()">Stop</button>
     <div class="tempo-control">
       <span>Tempo:</span>
-      <input type="range" id="tempoSlider" min="60" max="180" value="120" oninput="setTempo(this.value)">
-      <span class="tempo-display" id="tempoDisplay">120 BPM</span>
+      <input type="range" id="tempoSlider" min="60" max="180" value="128" oninput="setTempo(this.value)">
+      <span class="tempo-display" id="tempoDisplay">128 BPM</span>
     </div>
     <span class="measure-display" id="measureDisplay">Measure: — / 8</span>
     <div class="beat-bar" id="beatBar"></div>
@@ -841,7 +842,7 @@
     buildBeatBar();
     buildPartToggles();
     buildLyricsTabs();
-    Tone.Transport.bpm.value = 120;
+    Tone.Transport.bpm.value = 128;
   </script>
 </body>
 </html>
