@@ -697,6 +697,9 @@
     // ===================== LYRICS =====================
 
     const LYRICS = [
+      { label: "Intro", beats: 32, lines: [
+        "(32 Beat Introduction)"
+      ]},
       { label: "Verse 1", lines: [
         "When the night has come and the land is dark",
         "Y la luna es la luz que brilla ante m\u00ed"
@@ -729,8 +732,11 @@
         "Oh, stand",
         "Stand by me, stand by me"
       ]},
-      { label: "Break", lines: [
-        "(64 Beat Instrumental Interlude)"
+      { label: "Break 1", beats: 32, lines: [
+        "(Instrumental Break — Part 1)"
+      ]},
+      { label: "Break 2", beats: 32, lines: [
+        "(Instrumental Break — Part 2)"
       ]},
       { label: "Final Chorus", lines: [
         "And darling, darling, stand by me",
@@ -815,10 +821,13 @@
 
     function scheduleNextSection() {
       if (!autoAdvance) return;
-      // Advance 2 beats before the section ends (at beat 30 of 32)
-      const beatsPerSection = 32 - 2;
+      // Use per-section beat count if defined, default 32
+      const section = LYRICS[currentLyricsIndex];
+      const sectionBeats = (section && section.beats) || 32;
+      // Advance 2 beats before the section ends
+      const beatsToWait = sectionBeats - 2;
       const msPerBeat = (60 / Tone.Transport.bpm.value) * 1000;
-      const interval = beatsPerSection * msPerBeat;
+      const interval = beatsToWait * msPerBeat;
 
       autoAdvanceTimer = setTimeout(() => {
         if (!autoAdvance) return;
