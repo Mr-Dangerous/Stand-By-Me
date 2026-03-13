@@ -12,53 +12,59 @@ C   Am   F   G   C
 ## [Verse 1]
 
 ```
-        C
+         C
 When the night has come
- Am
-And the land is dark
-    F              G                    C
+Am
+     And the land is dark
+     F          G                    C
 Y la luna es la luz que brilla ante mi
+
+```
+
+## [Verse 2]
+
+```
        C                       Am
 Miedo no, no tendre, oh I won't, me asustare
-    F              G              C
+         F          G               C
 Just as long as you stand, stand by me
 ```
 
 ## [Chorus]
 
 ```
-                      C                 Am
+                      C               Am
 And darlin', darlin', stand by me, oh stand by me
-F     G           C
+   F    G         C
 oh stand, junto a mi, junto a mi
 ```
 
-## [Verse 2]
+## [Verse 3]
 
 ```
          C
 Y aunque las montanas, o el cielo caiga
 Am
 No voy a preocuparme
-       F         G              C
+       F          G              C
 porque se, que tu estas, junto a mi
 ```
 
-## [Verse 3]
+## [Verse 4]
 
 ```
-        C                Am
+           C            Am
 No llorare, no llorare, oh I won't shed a tear
-       F         G              C
+       F          G              C
 porque se, que tu estas, junto a mi
 ```
 
 ## [Chorus]
 
 ```
-                      C                 Am
+                      C               Am
 And darlin', darlin', stand by me, oh stand by me
-    F    G              C
+    F    G             C
 oh stand, stand by me, stand by me
 ```
 
@@ -71,13 +77,13 @@ C   Am   F   G   C  (x2)
 ## [Chorus — Final]
 
 ```
-                      C                 Am
+                      C               Am
 And darlin', darlin', stand by me, oh stand by me
-F        G            C
+   F     G        C
 oh stand, junto a mi, junto a mi
 
-                      C                 Am
+                      C               Am
 And darlin', darlin', stand by me, oh stand by me
-F        G            C
+   F     G        C
 oh stand, junto a mi, junto a mi
 ```
