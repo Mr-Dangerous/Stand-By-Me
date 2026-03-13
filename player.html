@@ -272,10 +272,9 @@
     .lyrics-display .section-title {
       font-family: 'Coming Soon', cursive;
       font-weight: bold;
-      font-size: 1.8rem;
-      color: #555;
-      margin-bottom: 10px;
-      border-bottom: 2px dashed #aaa;
+      font-size: 1rem;
+      color: #999;
+      margin-bottom: 2px;
       display: inline-block;
     }
     .back-link {
@@ -830,7 +829,7 @@
       });
 
       display.innerHTML =
-        `<div class="section-title">[${section.label}]</div><br>` +
+        `<div class="section-title">[${section.label}]</div>` +
         section.lines.join("<br>");
     }
 
