@@ -612,10 +612,15 @@
             `Measure: ${measNum + 1} / 8`;
         }, delay);
 
-        // Auto-advance lyrics on beat 30 of each 32-beat ostinato loop
-        if (autoAdvance && globalBeat === 30) {
+        // Auto-advance lyrics — advance earlier (beat 27) if next section is a chorus
+        if (autoAdvance) {
           const next = (currentLyricsIndex + 1) % LYRICS.length;
-          setTimeout(() => showLyricsSection(next), delay);
+          const nextLabel = LYRICS[next].label.toLowerCase();
+          const isNextChorus = nextLabel.includes("chorus");
+          const advanceBeat = isNextChorus ? 27 : 30;
+          if (globalBeat === advanceBeat) {
+            setTimeout(() => showLyricsSection(next), delay);
+          }
         }
 
         // Advance
