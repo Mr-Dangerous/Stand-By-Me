@@ -454,6 +454,7 @@
         desc: "Eighth note arpeggios",
         muted: false,
         synth: null,
+        loaded: false,
         measures: [
           // m1 C
           [["C4","8n",0],["G4","8n",1],["E4","8n",2],["C4","8n",3],["G4","8n",4],["E4","8n",5],["G3","8n",6],["B3","8n",7]],
@@ -618,21 +619,37 @@
       }).connect(bassFilter);
       PARTS.bass.synth.volume.value = 0;
 
-      // ---- GUITAR: pluck synth for arpeggios ----
+      // ---- GUITAR: acoustic sampler ----
       const guitarFilter = new Tone.Filter({
         type: "lowpass",
-        frequency: 3500,
+        frequency: 5000,
         rolloff: -12
       }).connect(masterReverb);
-      const guitarGain = new Tone.Gain(0.7).connect(guitarFilter);
-      const guitarPluck = new Tone.PluckSynth({
-        attackNoise: 1.2,
-        dampening: 3000,
-        resonance: 0.97
+      const guitarGain = new Tone.Gain(0.8).connect(guitarFilter);
+
+      const guitarToggle = document.getElementById("toggle-guitar");
+      if (guitarToggle) guitarToggle.querySelector(".part-desc").textContent = "Loading samples…";
+
+      const guitarSampler = new Tone.Sampler({
+        urls: {
+          "E2": "E2.mp3",
+          "A2": "A2.mp3",
+          "D3": "D3.mp3",
+          "G3": "G3.mp3",
+          "B3": "B3.mp3",
+          "E4": "E4.mp3",
+        },
+        baseUrl: "https://nbrosowsky.github.io/tonejs-instruments/samples/guitar-acoustic/",
+        onload: () => {
+          PARTS.guitar.loaded = true;
+          if (guitarToggle) guitarToggle.querySelector(".part-desc").textContent = "Eighth note arpeggios";
+        }
       }).connect(guitarGain);
+
       PARTS.guitar.synth = {
         triggerAttackRelease: function(note, dur, time) {
-          guitarPluck.triggerAttackRelease(note, time);
+          if (!PARTS.guitar.loaded) return;
+          guitarSampler.triggerAttackRelease(note, dur, time);
         }
       };
 
