@@ -203,6 +203,20 @@
       color: #666;
     }
 
+    .part-toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .vol-slider {
+      width: 100%;
+      height: 16px;
+      accent-color: #222;
+      margin-top: 4px;
+      cursor: pointer;
+    }
+
     /* ---------- RIGHT: lyrics ---------- */
     .lyrics-panel {
       display: flex;
@@ -306,8 +320,8 @@
     <button id="skipNextBtn" class="skip-btn" onclick="skipSection(1)" style="display:none;">Next &rarr;</button>
     <div class="tempo-control">
       <span>Tempo:</span>
-      <input type="range" id="tempoSlider" min="60" max="180" value="128" oninput="setTempo(this.value)">
-      <span class="tempo-display" id="tempoDisplay">128 BPM</span>
+      <input type="range" id="tempoSlider" min="60" max="180" value="110" oninput="setTempo(this.value)">
+      <span class="tempo-display" id="tempoDisplay">110 BPM</span>
     </div>
     <span class="measure-display" id="measureDisplay">Measure: — / 8</span>
     <div class="beat-bar" id="beatBar"></div>
@@ -360,6 +374,8 @@
         desc: "Palm mute strum",
         muted: false,
         synth: null,
+        volume: 1.0,
+        gainNode: null,
         // Stand By Me rhythm: 8th, qr, 8th, qr, qr
         // In 8th note grid (8 per measure): hit on 1, hit on 4
         pattern: function(time, measure) {
@@ -374,6 +390,8 @@
         desc: "Eighth notes, accented",
         muted: false,
         synth: null,
+        volume: 1.0,
+        gainNode: null,
         pattern: function(time, measure) {
           if (this.muted) return;
           const eighth = Tone.Time("8n").toSeconds();
@@ -393,6 +411,8 @@
         desc: "Tap + scrapes",
         muted: false,
         synth: null,
+        volume: 1.0,
+        gainNode: null,
         // 8th tap, 2x16th scrape, 6x8th scrape
         pattern: function(time, measure) {
           if (this.muted) return;
@@ -422,6 +442,8 @@
         desc: "Walking bass line",
         muted: false,
         synth: null,
+        volume: 1.0,
+        gainNode: null,
         measures: [
           // m1 C
           [["C3","8n",0], ["C3","4n.",3], ["G2","8n",6], ["B2","8n",7]],
@@ -455,6 +477,8 @@
         muted: false,
         synth: null,
         loaded: false,
+        volume: 0.7,
+        gainNode: null,
         measures: [
           // m1 C
           [["C4","8n",0],["G4","8n",1],["E4","8n",2],["C4","8n",3],["G4","8n",4],["E4","8n",5],["G3","8n",6],["B3","8n",7]],
@@ -486,6 +510,8 @@
         desc: "Dotted quarter pattern",
         muted: false,
         synth: null,
+        volume: 1.0,
+        gainNode: null,
         pattern: function(time, measure) {
           if (this.muted) return;
           const eighth = Tone.Time("8n").toSeconds();
@@ -506,59 +532,44 @@
     // ===================== INIT SYNTHS =====================
 
     function initSynths() {
-      // ---- Master bus: light compression + reverb ----
+      // ---- Master bus ----
       const masterComp = new Tone.Compressor({
-        threshold: -20,
-        ratio: 3,
-        attack: 0.01,
-        release: 0.1
+        threshold: -20, ratio: 3, attack: 0.01, release: 0.1
       }).toDestination();
 
-      const masterReverb = new Tone.Reverb({
-        decay: 1.5,
-        wet: 0.15
-      }).connect(masterComp);
+      const masterReverb = new Tone.Reverb({ decay: 1.5, wet: 0.15 }).connect(masterComp);
 
-      // ---- UKULELE: multi-string pluck for chord strum ----
-      const ukeStrings = [];
-      const ukeFilter = new Tone.Filter({
-        type: "lowpass",
-        frequency: 1800,
-        rolloff: -24
-      }).connect(masterReverb);
-      const ukeGain = new Tone.Gain(1.0).connect(ukeFilter);
-      for (let i = 0; i < 4; i++) {
-        const s = new Tone.PluckSynth({
-          attackNoise: 0.8,
-          dampening: 1500,
-          resonance: 0.88
-        }).connect(ukeGain);
-        ukeStrings.push(s);
+      function makePartGain(key, connectTo) {
+        const g = new Tone.Gain(PARTS[key].volume).connect(connectTo);
+        PARTS[key].gainNode = g;
+        return g;
       }
-      // Strum chord across 4 strings with slight delay
+
+      // ---- UKULELE ----
+      const ukePartGain = makePartGain("ukulele", masterReverb);
+      const ukeFilter = new Tone.Filter({ type: "lowpass", frequency: 1800, rolloff: -24 }).connect(ukePartGain);
+      const ukeGain = new Tone.Gain(1.0).connect(ukeFilter);
+      const ukeStrings = [];
+      for (let i = 0; i < 4; i++) {
+        ukeStrings.push(new Tone.PluckSynth({ attackNoise: 0.8, dampening: 1500, resonance: 0.88 }).connect(ukeGain));
+      }
       PARTS.ukulele.synth = {
         triggerAttackRelease: function(note, dur, time, vel) {
           const chordNotes = ["G4", "C4", "E4", "C5"];
-          const strumDelay = 0.012;
           chordNotes.forEach((n, i) => {
-            ukeStrings[i].triggerAttackRelease(tn(n), "32n", time + strumDelay * i);
+            ukeStrings[i].triggerAttackRelease(tn(n), "32n", time + 0.012 * i);
           });
         }
       };
 
-      // ---- CABASA: bandpass-filtered noise for metallic shaker ----
-      const cabasaFilter = new Tone.Filter({
-        type: "bandpass",
-        frequency: 7000,
-        Q: 1.5
-      }).connect(masterComp);
-
+      // ---- CABASA ----
+      const cabasaPartGain = makePartGain("cabasa", masterComp);
+      const cabasaFilter = new Tone.Filter({ type: "bandpass", frequency: 7000, Q: 1.5 }).connect(cabasaPartGain);
       const cabasaNoise = new Tone.NoiseSynth({
         noise: { type: "white" },
         envelope: { attack: 0.001, decay: 0.04, sustain: 0, release: 0.015 }
       }).connect(cabasaFilter);
       cabasaNoise.volume.value = -14;
-
       PARTS.cabasa.synth = {
         triggerAttackRelease: function(note, dur, time, vel) {
           cabasaNoise.volume.value = vel > 0.5 ? -10 : -20;
@@ -566,12 +577,9 @@
         }
       };
 
-      // ---- GUIRO: pool of synths to avoid choking ----
-      const guiroTapFilter = new Tone.Filter({
-        type: "highpass",
-        frequency: 5000
-      }).connect(masterComp);
-
+      // ---- GUIRO ----
+      const guiroPartGain = makePartGain("guiro", masterComp);
+      const guiroTapFilter = new Tone.Filter({ type: "highpass", frequency: 5000 }).connect(guiroPartGain);
       const guiroTap = new Tone.NoiseSynth({
         noise: { type: "white" },
         envelope: { attack: 0.001, decay: 0.025, sustain: 0, release: 0.01 }
@@ -579,13 +587,7 @@
       guiroTap.volume.value = -8;
       PARTS.guiro.synthTap = guiroTap;
 
-      // Pool of scrape synths (8 notes per measure, need several)
-      const guiroScrapeFilter = new Tone.Filter({
-        type: "bandpass",
-        frequency: 3500,
-        Q: 2
-      }).connect(masterComp);
-
+      const guiroScrapeFilter = new Tone.Filter({ type: "bandpass", frequency: 3500, Q: 2 }).connect(guiroPartGain);
       const scrapePool = [];
       for (let i = 0; i < 8; i++) {
         const s = new Tone.NoiseSynth({
@@ -598,54 +600,30 @@
       PARTS.guiro.scrapePool = scrapePool;
       PARTS.guiro.scrapeIndex = 0;
 
-      // ---- BASS: warm finger-style bass ----
-      const bassFilter = new Tone.Filter({
-        type: "lowpass",
-        frequency: 600,
-        rolloff: -24
-      }).connect(masterComp);
-
+      // ---- BASS ----
+      const bassPartGain = makePartGain("bass", masterComp);
+      const bassFilter = new Tone.Filter({ type: "lowpass", frequency: 600, rolloff: -24 }).connect(bassPartGain);
       PARTS.bass.synth = new Tone.MonoSynth({
         oscillator: { type: "fmsine", modulationIndex: 0.8 },
         envelope: { attack: 0.03, decay: 0.25, sustain: 0.5, release: 0.4 },
-        filterEnvelope: {
-          attack: 0.02,
-          decay: 0.2,
-          sustain: 0.3,
-          release: 0.3,
-          baseFrequency: 120,
-          octaves: 2.5
-        }
+        filterEnvelope: { attack: 0.02, decay: 0.2, sustain: 0.3, release: 0.3, baseFrequency: 120, octaves: 2.5 }
       }).connect(bassFilter);
       PARTS.bass.synth.volume.value = 0;
 
-      // ---- GUITAR: acoustic sampler ----
-      const guitarFilter = new Tone.Filter({
-        type: "lowpass",
-        frequency: 5000,
-        rolloff: -12
-      }).connect(masterReverb);
+      // ---- GUITAR ----
+      const guitarPartGain = makePartGain("guitar", masterReverb);
+      const guitarFilter = new Tone.Filter({ type: "lowpass", frequency: 5000, rolloff: -12 }).connect(guitarPartGain);
       const guitarGain = new Tone.Gain(0.8).connect(guitarFilter);
-
       const guitarToggle = document.getElementById("toggle-guitar");
       if (guitarToggle) guitarToggle.querySelector(".part-desc").textContent = "Loading samples…";
-
       const guitarSampler = new Tone.Sampler({
-        urls: {
-          "E2": "E2.mp3",
-          "A2": "A2.mp3",
-          "D3": "D3.mp3",
-          "G3": "G3.mp3",
-          "B3": "B3.mp3",
-          "E4": "E4.mp3",
-        },
+        urls: { "E2": "E2.mp3", "A2": "A2.mp3", "D3": "D3.mp3", "G3": "G3.mp3", "B3": "B3.mp3", "E4": "E4.mp3" },
         baseUrl: "https://nbrosowsky.github.io/tonejs-instruments/samples/guitar-acoustic/",
         onload: () => {
           PARTS.guitar.loaded = true;
           if (guitarToggle) guitarToggle.querySelector(".part-desc").textContent = "Eighth note arpeggios";
         }
       }).connect(guitarGain);
-
       PARTS.guitar.synth = {
         triggerAttackRelease: function(note, dur, time) {
           if (!PARTS.guitar.loaded) return;
@@ -653,16 +631,11 @@
         }
       };
 
-      // ---- BASS DRUM: deep kick with sub thump ----
-      const kickFilter = new Tone.Filter({
-        type: "lowpass",
-        frequency: 200,
-        rolloff: -12
-      }).connect(masterComp);
-
+      // ---- BASS DRUM ----
+      const drumsPartGain = makePartGain("drums", masterComp);
+      const kickFilter = new Tone.Filter({ type: "lowpass", frequency: 200, rolloff: -12 }).connect(drumsPartGain);
       PARTS.drums.synth = new Tone.MembraneSynth({
-        pitchDecay: 0.08,
-        octaves: 6,
+        pitchDecay: 0.08, octaves: 6,
         envelope: { attack: 0.006, decay: 0.5, sustain: 0, release: 0.5 }
       }).connect(kickFilter);
       PARTS.drums.synth.volume.value = -2;
@@ -803,17 +776,37 @@
         const div = document.createElement("div");
         div.className = "part-toggle";
         div.id = `toggle-${key}`;
-        div.innerHTML = `
+        div.style.flexDirection = "column";
+        div.style.alignItems = "stretch";
+
+        const row = document.createElement("div");
+        row.className = "part-toggle-row";
+        row.innerHTML = `
           <div class="indicator"></div>
           <div>
             <div class="part-name">${part.name}</div>
             <div class="part-desc">${part.desc}</div>
           </div>
         `;
-        div.addEventListener("click", () => {
+        row.addEventListener("click", () => {
           part.muted = !part.muted;
           div.classList.toggle("muted", part.muted);
         });
+
+        const slider = document.createElement("input");
+        slider.type = "range";
+        slider.className = "vol-slider";
+        slider.min = 0;
+        slider.max = 100;
+        slider.value = Math.round(part.volume * 100);
+        slider.title = "Volume";
+        slider.addEventListener("input", (e) => {
+          part.volume = e.target.value / 100;
+          if (part.gainNode) part.gainNode.gain.value = part.volume;
+        });
+
+        div.appendChild(row);
+        div.appendChild(slider);
         container.appendChild(div);
       }
     }
@@ -968,7 +961,7 @@
     buildBeatBar();
     buildPartToggles();
     buildLyricsTabs();
-    Tone.Transport.bpm.value = 128;
+    Tone.Transport.bpm.value = 110;
   </script>
 </body>
 </html>
