@@ -449,6 +449,37 @@
           }
         }
       },
+      guitar: {
+        name: "Guitar",
+        desc: "Eighth note arpeggios",
+        muted: false,
+        synth: null,
+        measures: [
+          // m1 C
+          [["C4","8n",0],["G4","8n",1],["E4","8n",2],["C4","8n",3],["G4","8n",4],["E4","8n",5],["G3","8n",6],["B3","8n",7]],
+          // m2 C
+          [["C4","8n",0],["G4","8n",1],["E4","8n",2],["C4","8n",3],["G4","8n",4],["E4","8n",5],["C4","8n",6],["B3","8n",7]],
+          // m3 Am
+          [["A3","8n",0],["C4","8n",1],["E4","8n",2],["A3","8n",3],["C4","8n",4],["E4","8n",5],["E3","8n",6],["C4","8n",7]],
+          // m4 Am
+          [["A3","8n",0],["C4","8n",1],["E4","8n",2],["C4","8n",3],["F4","8n",4],["C4","8n",5],["E4","8n",6],["C4","8n",7]],
+          // m5 F
+          [["F3","8n",0],["A3","8n",1],["C4","8n",2],["F4","4n",3],["C4","8n",5],["F3","8n",6],["A3","8n",7]],
+          // m6 G
+          [["G4","8n",0],["D5","8n",1],["G5","8n",2],["B5","4n",3],["D5","8n",5],["G5","8n",6],["D5","8n",7]],
+          // m7 C — C5 ties into m8
+          [["C4","8n",0],["E4","8n",1],["G4","8n",2],["A4","4n",3],["G4","4n",5],["C5","4n",7]],
+          // m8 C — C5 from m7 rings; E4 quarter, G4 quarter, G4 quarter, C4 eighth
+          [["E4","4n",1],["G4","4n",3],["G4","4n",5],["C4","8n",7]],
+        ],
+        pattern: function(time, measure) {
+          if (this.muted) return;
+          const eighth = Tone.Time("8n").toSeconds();
+          for (const [note, dur, pos] of this.measures[measure]) {
+            this.synth.triggerAttackRelease(tn(note), dur, time + eighth * pos);
+          }
+        }
+      },
       drums: {
         name: "Bass Drum",
         desc: "Dotted quarter pattern",
@@ -586,6 +617,24 @@
         }
       }).connect(bassFilter);
       PARTS.bass.synth.volume.value = 0;
+
+      // ---- GUITAR: pluck synth for arpeggios ----
+      const guitarFilter = new Tone.Filter({
+        type: "lowpass",
+        frequency: 3500,
+        rolloff: -12
+      }).connect(masterReverb);
+      const guitarGain = new Tone.Gain(0.7).connect(guitarFilter);
+      const guitarPluck = new Tone.PluckSynth({
+        attackNoise: 1.2,
+        dampening: 3000,
+        resonance: 0.97
+      }).connect(guitarGain);
+      PARTS.guitar.synth = {
+        triggerAttackRelease: function(note, dur, time) {
+          guitarPluck.triggerAttackRelease(note, time);
+        }
+      };
 
       // ---- BASS DRUM: deep kick with sub thump ----
       const kickFilter = new Tone.Filter({
