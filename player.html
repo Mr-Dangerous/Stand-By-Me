@@ -291,6 +291,9 @@
       margin-bottom: 2px;
       display: inline-block;
     }
+    .lyric-line { margin-bottom: 0.1em; }
+    .kw { color: #ccc; transition: color 0.15s; }
+    .kw.lit { color: #222; }
     .back-link {
       position: absolute;
       top: 8px;
@@ -728,6 +731,7 @@
           updateBeatDisplayDirect(globalBeat);
           document.getElementById("measureDisplay").textContent =
             `Measure: ${measNum + 1} / ${currentSectionLength}`;
+          updateKaraoke(globalBeat);
         }, delay);
 
         // Auto-advance lyrics — fire at last beat of section
@@ -919,11 +923,11 @@
         [], [], [], [], [], [], [], [],
       ],
       "Break 2": [
-        [], [], [], [], [], [], [],
+        [], [], [], [], [], [],
         [["G4", 1.0, 7.0]],
+        [["A4", 2.0, 0.0], ["G4", 2.0, 2.0], ["C5", 2.0, 4.0], ["B4", 2.0, 6.0]],
       ],
       "Final Chorus": [
-        [["A4", 2.0, 0.0], ["G4", 2.0, 2.0], ["C5", 2.0, 4.0], ["B4", 2.0, 6.0]],
         [["A4", 1.0, 0.0], ["G4", 1.0, 1.0], ["A4", 3.0, 2.0], ["A4", 2.0, 5.0], ["A4", 1.0, 7.0]],
         [["A4", 4.0, 4.0]],
         [["E4", 1.0, 0.0], ["D4", 1.0, 1.0], ["E4", 3.0, 2.0], ["D4", 2.0, 5.0], ["C4", 0.6667, 7.0], ["D4", 0.6667, 7.3333]],
@@ -931,6 +935,49 @@
         [["C4", 2.0, 0.0]],
         [["E4", 1.0, 3.0], ["D4", 1.0, 4.0], ["C4", 2.0, 5.0], ["C4", 3.0, 7.0]],
         [["E4", 1.0, 3.0], ["D4", 1.0, 4.0], ["C4", 2.0, 5.0], ["C4", 1.0, 7.0]],
+        [],
+      ],
+    };
+
+    // ===================== KARAOKE =====================
+
+    const KARAOKE = {
+      "Verse 1": [
+        [{b:-1,w:"When"},{b:-1,w:"the"},{b:-1,w:"night,"},{b:3,w:"has"},{b:3.5,w:"come"},{b:9.5,w:"and"},{b:9.83,w:"the"},{b:10.17,w:"land"},{b:10.83,w:"is"},{b:11.5,w:"dark"}],
+        [{b:14.5,w:"Y"},{b:15,w:"la"},{b:15.5,w:"luna"},{b:18.5,w:"es"},{b:19,w:"la"},{b:19.5,w:"luz"},{b:21,w:"que"},{b:21.5,w:"brilla"},{b:22.67,w:"ante"},{b:24,w:"mí"}],
+      ],
+      "Verse 2": [
+        [{b:-1,w:"Miedo"},{b:-1,w:"no,"},{b:2.5,w:"no"},{b:3,w:"tendré,"},{b:6,w:"oh,"},{b:6.67,w:"I"},{b:7.33,w:"won't,"},{b:9.5,w:"no"},{b:9.75,w:"me"},{b:10,w:"asustaré"}],
+        [{b:14.5,w:"Just"},{b:15,w:"as"},{b:15.5,w:"long"},{b:18.5,w:"as"},{b:19,w:"you"},{b:19.5,w:"stand,"},{b:22,w:"stand"},{b:22.5,w:"by"},{b:24,w:"me"}],
+      ],
+      "Chorus": [
+        [{b:-1,w:"And"},{b:-1,w:"darling,"},{b:-1,w:"darling,"},{b:0,w:"stand"},{b:2.5,w:"by"},{b:3.5,w:"me"}],
+        [{b:6,w:"Oh,"},{b:8,w:"stand"},{b:10.5,w:"by"},{b:12,w:"me"}],
+        [{b:15,w:"Oh,"},{b:16,w:"stand,"},{b:21.5,w:"junto"},{b:22.5,w:"a"},{b:23.5,w:"mí"},{b:25.5,w:"(junto"},{b:26.5,w:"a"},{b:27.5,w:"mí)"}],
+        [{b:25.5,w:"Junto"},{b:26.5,w:"a"},{b:27.5,w:"mí"}],
+      ],
+      "Verse 3": [
+        [{b:-1,w:"Y"},{b:-1,w:"aunque"},{b:-1,w:"las"},{b:-1,w:"montañas"},{b:2,w:"o"},{b:2.5,w:"el"},{b:3,w:"cielo"},{b:4,w:"caiga"}],
+        [{b:8.5,w:"No"},{b:8.83,w:"voy"},{b:9.17,w:"a"},{b:9.83,w:"preocuparme"}],
+        [{b:14.5,w:"Porque"},{b:15.5,w:"sé"},{b:16,w:"(porque"},{b:16.5,w:"sé)"},{b:18.5,w:"que"},{b:19,w:"tú"},{b:19.5,w:"estás"},{b:20,w:"(que"},{b:20.5,w:"tú"},{b:21,w:"estás)"}],
+        [{b:23,w:"Junto"},{b:24,w:"a"},{b:25,w:"mí"}],
+      ],
+      "Verse 4": [
+        [{b:-1,w:"No"},{b:-1,w:"lloraré,"},{b:1.5,w:"no"},{b:2,w:"lloraré"}],
+        [{b:8,w:"Oh,"},{b:9.5,w:"I"},{b:10,w:"won't"},{b:10.67,w:"shed"},{b:11.33,w:"a"},{b:12,w:"tear"}],
+        [{b:15,w:"Porque"},{b:16,w:"sé"},{b:16.5,w:"(porque"},{b:17,w:"sé)"},{b:19,w:"que"},{b:19.5,w:"tú"},{b:20,w:"estás"},{b:20.5,w:"(que"},{b:21,w:"tú"},{b:21.5,w:"estás)"}],
+        [{b:23,w:"Junto"},{b:24,w:"a"},{b:25.5,w:"mí"}],
+      ],
+      "Chorus 2": [
+        [{b:-1,w:"And"},{b:-1,w:"darling,"},{b:-1,w:"darling,"},{b:0,w:"stand"},{b:2.5,w:"by"},{b:3.5,w:"me"}],
+        [{b:6,w:"Oh,"},{b:8,w:"stand"},{b:10.5,w:"by"},{b:12,w:"me"}],
+        [{b:15,w:"Oh,"},{b:16,w:"stand"}],
+        [{b:21.5,w:"Stand"},{b:22,w:"by"},{b:23.5,w:"me,"},{b:25.5,w:"stand"},{b:26,w:"by"},{b:27.5,w:"me"}],
+      ],
+      "Final Chorus": [
+        [{b:-1,w:"And"},{b:-1,w:"darling,"},{b:-1,w:"darling,"},{b:0,w:"stand"},{b:2.5,w:"by"},{b:3.5,w:"me"}],
+        [{b:6,w:"Oh,"},{b:8,w:"stand"},{b:10.5,w:"by"},{b:12,w:"me"}],
+        [{b:15,w:"Oh,"},{b:16,w:"stand,"},{b:21.5,w:"junto"},{b:22.5,w:"a"},{b:23.5,w:"mí,"},{b:25.5,w:"junto"},{b:26.5,w:"a"},{b:27.5,w:"mí"}],
       ],
     };
 
@@ -1025,11 +1072,28 @@
         btn.classList.toggle("active", parseInt(btn.dataset.index) === index);
       });
 
-      display.innerHTML =
-        `<div class="section-title">[${section.label}]</div>` +
-        section.lines.join("<br>");
+      const kLines = KARAOKE[section.label];
+      let content = `<div class="section-title">[${section.label}]</div>`;
+      if (kLines) {
+        content += kLines.map(line =>
+          '<div class="lyric-line">' +
+          line.map(({b, w}) =>
+            `<span class="kw${b < 0 ? ' lit' : ''}" data-b="${b}">${w}</span>`
+          ).join(' ') +
+          '</div>'
+        ).join('');
+      } else {
+        content += section.lines.join('<br>');
+      }
+      display.innerHTML = content;
 
       setMelodySection(section.label);
+    }
+
+    function updateKaraoke(beat) {
+      document.querySelectorAll('.kw:not(.lit)').forEach(span => {
+        if (parseFloat(span.dataset.b) <= beat) span.classList.add('lit');
+      });
     }
 
     function toggleAutoAdvance() {
