@@ -465,7 +465,7 @@
         pattern: function(time, measure) {
           if (this.muted) return;
           const eighth = Tone.Time("8n").toSeconds();
-          const notes = this.measures[measure];
+          const notes = this.measures[measure % this.measures.length];
           for (const [note, dur, pos] of notes) {
             this.synth.triggerAttackRelease(tn(note), dur, time + eighth * pos);
           }
@@ -500,7 +500,7 @@
         pattern: function(time, measure) {
           if (this.muted) return;
           const eighth = Tone.Time("8n").toSeconds();
-          for (const [note, dur, pos] of this.measures[measure]) {
+          for (const [note, dur, pos] of this.measures[measure % this.measures.length]) {
             this.synth.triggerAttackRelease(tn(note), dur, time + eighth * pos);
           }
         }
@@ -515,7 +515,7 @@
         pattern: function(time, measure) {
           if (this.muted) return;
           const eighth = Tone.Time("8n").toSeconds();
-          if (measure < 7) {
+          if (measure % 8 < 7) {
             // bd4. bd8 r4 r4
             this.synth.triggerAttackRelease("C1", "4n.", time, 0.9);
             this.synth.triggerAttackRelease("C1", "8n", time + eighth * 3, 0.7);
@@ -547,9 +547,12 @@
       }
     };
 
+    let currentSectionLength = 8;
+
     function setMelodySection(label) {
       const m = MELODY_MEASURES[label];
       PARTS.melody.measures = m ? m.map(arr => arr.slice()) : Array(8).fill([]);
+      currentSectionLength = PARTS.melody.measures.length;
     }
 
     // ===================== INIT SYNTHS =====================
@@ -724,17 +727,15 @@
         setTimeout(() => {
           updateBeatDisplayDirect(globalBeat);
           document.getElementById("measureDisplay").textContent =
-            `Measure: ${measNum + 1} / 8`;
+            `Measure: ${measNum + 1} / ${currentSectionLength}`;
         }, delay);
 
-        // Auto-advance lyrics — advance earlier (beat 27) if next section is a chorus
+        // Auto-advance lyrics — fire at last beat of section
         if (autoAdvance) {
           if (globalBeat === 0) autoAdvancedThisLoop = false;
           if (!autoAdvancedThisLoop) {
             const next = (currentLyricsIndex + 1) % LYRICS.length;
-            const nextLabel = LYRICS[next].label.toLowerCase();
-            const isNextChorus = nextLabel.includes("chorus");
-            const advanceBeat = isNextChorus ? 27 : 30;
+            const advanceBeat = currentSectionLength * 4 - 1;
             if (globalBeat === advanceBeat) {
               autoAdvancedThisLoop = true;
               setTimeout(() => showLyricsSection(next), delay);
@@ -747,7 +748,7 @@
         if (currentBeat >= 4) {
           currentBeat = 0;
           currentMeasure++;
-          if (currentMeasure >= 8) {
+          if (currentMeasure >= currentSectionLength) {
             if (document.getElementById("loopCheck").checked) {
               currentMeasure = 0;
             } else {
@@ -875,6 +876,10 @@
         [["A4", 2.0, 0.0], ["G4", 2.0, 2.0], ["C5", 2.0, 4.0], ["B4", 2.0, 6.0]],
       ],
       "Chorus": [
+        // pickup: Verse 2 m6–m7 (MIDI m23–m24)
+        [["C4", 2.0, 0.0], ["G4", 1.0, 7.0]],
+        [["A4", 2.0, 0.0], ["G4", 2.0, 2.0], ["C5", 2.0, 4.0], ["B4", 2.0, 6.0]],
+        // chorus downbeat onward (MIDI m25–m32)
         [["A4", 1.0, 0.0], ["G4", 1.0, 1.0], ["A4", 3.0, 2.0], ["A4", 2.0, 5.0], ["A4", 1.0, 7.0]],
         [["A4", 4.0, 4.0]],
         [["E4", 1.0, 0.0], ["D4", 1.0, 1.0], ["E4", 3.0, 2.0], ["D4", 2.0, 5.0], ["C4", 0.6667, 7.0], ["D4", 0.6667, 7.3333]],
@@ -905,6 +910,10 @@
         [["A4", 2.0, 0.0], ["G4", 2.0, 2.0], ["C5", 2.0, 4.0], ["B4", 2.0, 6.0]],
       ],
       "Chorus 2": [
+        // pickup: Verse 4 m6–m7 (MIDI m47–m48)
+        [["C4", 3.0, 0.0], ["C4", 1.0, 3.0], ["G4", 1.0, 7.0]],
+        [["A4", 2.0, 0.0], ["G4", 2.0, 2.0], ["C5", 2.0, 4.0], ["B4", 2.0, 6.0]],
+        // chorus downbeat onward (MIDI m49–m56)
         [["A4", 1.0, 0.0], ["G4", 1.0, 1.0], ["A4", 3.0, 2.0], ["A4", 2.0, 5.0], ["A4", 1.0, 7.0]],
         [["A4", 4.0, 4.0]],
         [["E4", 1.0, 0.0], ["D4", 1.0, 1.0], ["E4", 3.0, 2.0], ["D4", 2.0, 5.0], ["C4", 0.6667, 7.0], ["D4", 0.6667, 7.3333]],
