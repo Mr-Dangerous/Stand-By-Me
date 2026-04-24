@@ -636,7 +636,7 @@
       // ---- GUITAR ----
       const guitarPartGain = makePartGain("guitar", masterReverb);
       const guitarFilter = new Tone.Filter({ type: "lowpass", frequency: 5000, rolloff: -12 }).connect(guitarPartGain);
-      const guitarGain = new Tone.Gain(0.8).connect(guitarFilter);
+      const guitarGain = new Tone.Gain(0.4).connect(guitarFilter);
       const guitarToggle = document.getElementById("toggle-guitar");
       if (guitarToggle) guitarToggle.querySelector(".part-desc").textContent = "Loading samples…";
       const guitarSampler = new Tone.Sampler({
@@ -665,11 +665,14 @@
 
       // ---- MELODY ----
       const melodyPartGain = makePartGain("melody", masterReverb);
-      PARTS.melody.synth = new Tone.Synth({
-        oscillator: { type: "triangle" },
-        envelope: { attack: 0.008, decay: 0.4, sustain: 0.3, release: 1.6 }
+      const melodySampler = new Tone.Sampler({
+        urls: {
+          "A3": "A3.mp3", "C4": "C4.mp3", "Ds4": "Ds4.mp3",
+          "Fs4": "Fs4.mp3", "A4": "A4.mp3", "C5": "C5.mp3"
+        },
+        baseUrl: "https://nbrosowsky.github.io/tonejs-instruments/samples/piano/",
       }).connect(melodyPartGain);
-      PARTS.melody.synth.volume.value = 2;
+      PARTS.melody.synth = melodySampler;
     }
 
     // ===================== TRANSPORT =====================
