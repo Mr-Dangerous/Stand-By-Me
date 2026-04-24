@@ -141,6 +141,23 @@
 
     .loop-toggle input { accent-color: #222; width: 18px; height: 18px; }
 
+    .melody-toggle {
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;
+      padding: 5px 12px;
+      border: 2px solid #222;
+      border-radius: 8px;
+      background: #fff;
+      font-family: 'Patrick Hand', cursive;
+    }
+    .melody-toggle input[type="checkbox"] { accent-color: #222; width: 18px; height: 18px; }
+    .melody-toggle.on { background: #3a7d44; color: #fff; border-color: #3a7d44; }
+    .melody-vol { width: 70px; height: 16px; accent-color: #3a7d44; cursor: pointer; }
+
     /* ---------- MAIN CONTENT: two columns ---------- */
     .main-content {
       display: grid;
@@ -736,11 +753,13 @@
       document.getElementById("playBtn").textContent = "Play";
       document.getElementById("measureDisplay").textContent = "Measure: — / 8";
       clearBeatDisplay();
+      stopMelody();
     }
 
     function setTempo(val) {
       Tone.Transport.bpm.value = val;
       document.getElementById("tempoDisplay").textContent = val + " BPM";
+      if (melodyEnabled && currentMelodySection) triggerMelody(currentMelodySection);
     }
 
     // ===================== BEAT DISPLAY =====================
@@ -811,6 +830,156 @@
       }
     }
 
+    // ===================== MELODY =====================
+
+    const MELODY_SECTIONS = {
+      "Verse 1": [
+        {s:0.5000, d:0.5000, m:64},{s:1.0000, d:0.5000, m:67},{s:1.5000, d:0.5000, m:67},
+        {s:2.0000, d:1.0000, m:69},{s:5.0000, d:0.5000, m:64},{s:5.5000, d:1.5000, m:67},
+        {s:11.3333, d:0.3333, m:60},{s:11.6667, d:0.3333, m:62},{s:12.0000, d:0.6667, m:64},
+        {s:12.6667, d:0.6667, m:62},{s:13.3333, d:1.6667, m:60},{s:16.5000, d:0.5000, m:62},
+        {s:17.0000, d:0.5000, m:62},{s:17.5000, d:1.0000, m:60},{s:18.5000, d:1.0000, m:60},
+        {s:20.5000, d:0.5000, m:60},{s:21.0000, d:0.5000, m:64},{s:21.5000, d:1.0000, m:62},
+        {s:23.0000, d:0.5000, m:62},{s:23.5000, d:0.5000, m:62},{s:24.0000, d:0.6667, m:62},
+        {s:24.6667, d:0.6667, m:62},{s:25.3333, d:0.6667, m:62},{s:26.0000, d:1.0000, m:60},
+      ],
+      "Verse 2": [
+        {s:0.5000, d:0.5000, m:64},{s:1.0000, d:0.5000, m:67},{s:1.5000, d:1.0000, m:69},
+        {s:4.5000, d:0.5000, m:64},{s:5.0000, d:0.5000, m:67},{s:5.5000, d:1.5000, m:69},
+        {s:8.0000, d:0.6667, m:69},{s:8.6667, d:0.6667, m:67},{s:9.3333, d:0.6667, m:64},
+        {s:11.5000, d:0.2500, m:60},{s:11.7500, d:0.2500, m:62},{s:12.0000, d:0.5000, m:64},
+        {s:12.5000, d:0.5000, m:60},{s:13.0000, d:0.5000, m:62},{s:13.5000, d:1.5000, m:60},
+        {s:16.5000, d:0.5000, m:60},{s:17.0000, d:0.5000, m:62},{s:17.5000, d:2.0000, m:60},
+        {s:20.5000, d:0.5000, m:60},{s:21.0000, d:0.5000, m:64},{s:21.5000, d:1.0000, m:62},
+        {s:24.0000, d:0.5000, m:64},{s:24.5000, d:0.5000, m:62},{s:25.0000, d:1.0000, m:60},
+        {s:26.0000, d:1.0000, m:60},{s:29.5000, d:0.5000, m:67},{s:30.0000, d:1.0000, m:69},
+        {s:31.0000, d:1.0000, m:67},
+      ],
+      "Chorus": [
+        {s:0.0000, d:1.0000, m:72},{s:1.0000, d:1.0000, m:71},{s:2.0000, d:0.5000, m:69},
+        {s:2.5000, d:0.5000, m:67},{s:3.0000, d:1.5000, m:69},{s:4.5000, d:1.0000, m:69},
+        {s:5.5000, d:0.5000, m:69},{s:8.0000, d:2.0000, m:69},{s:10.0000, d:0.5000, m:64},
+        {s:10.5000, d:0.5000, m:62},{s:11.0000, d:1.5000, m:64},{s:12.5000, d:1.0000, m:62},
+        {s:13.5000, d:0.2500, m:60},{s:13.7500, d:0.2500, m:62},{s:14.0000, d:1.0000, m:60},
+        {s:17.0000, d:1.0000, m:64},{s:18.0000, d:1.0000, m:60},{s:23.5000, d:0.5000, m:64},
+        {s:24.0000, d:0.5000, m:62},{s:24.5000, d:1.0000, m:60},{s:25.5000, d:1.5000, m:60},
+        {s:27.5000, d:0.5000, m:64},{s:28.0000, d:0.5000, m:62},{s:28.5000, d:1.0000, m:60},
+        {s:29.5000, d:0.5000, m:60},{s:31.5000, d:0.5000, m:64},
+      ],
+      "Verse 3": [
+        {s:0.0000, d:0.5000, m:64},{s:0.5000, d:0.5000, m:64},{s:1.0000, d:0.5000, m:67},
+        {s:1.5000, d:0.5000, m:67},{s:2.0000, d:1.0000, m:69},{s:3.0000, d:1.0000, m:67},
+        {s:4.0000, d:0.5000, m:64},{s:4.5000, d:0.5000, m:64},{s:5.0000, d:0.5000, m:64},
+        {s:5.5000, d:0.5000, m:67},{s:6.0000, d:1.0000, m:69},{s:7.0000, d:1.0000, m:67},
+        {s:10.3333, d:0.3333, m:60},{s:10.6667, d:0.3333, m:62},{s:11.0000, d:0.6667, m:64},
+        {s:11.6667, d:0.6667, m:64},{s:12.3333, d:0.3333, m:64},{s:12.6667, d:0.3333, m:62},
+        {s:13.0000, d:1.0000, m:60},{s:14.0000, d:1.0000, m:60},{s:16.5000, d:0.5000, m:62},
+        {s:17.0000, d:0.5000, m:62},{s:17.5000, d:1.0000, m:60},{s:20.5000, d:0.5000, m:60},
+        {s:21.0000, d:0.5000, m:64},{s:21.5000, d:1.5000, m:62},{s:25.0000, d:0.5000, m:64},
+        {s:25.5000, d:0.5000, m:62},{s:26.0000, d:1.0000, m:60},{s:27.0000, d:1.0000, m:60},
+        {s:30.5000, d:1.0000, m:69},{s:31.5000, d:1.0000, m:64},
+      ],
+      "Verse 4": [
+        {s:0.5000, d:1.0000, m:62},{s:1.5000, d:1.0000, m:64},{s:3.5000, d:0.5000, m:64},
+        {s:4.0000, d:0.5000, m:64},{s:4.5000, d:0.5000, m:67},{s:5.0000, d:1.0000, m:69},
+        {s:6.0000, d:2.0000, m:67},{s:10.0000, d:1.0000, m:64},{s:11.5000, d:0.5000, m:64},
+        {s:12.0000, d:0.6667, m:64},{s:12.6667, d:0.6667, m:60},{s:13.3333, d:0.6667, m:62},
+        {s:14.0000, d:1.0000, m:60},{s:17.0000, d:0.5000, m:62},{s:17.5000, d:0.5000, m:64},
+        {s:18.0000, d:1.0000, m:60},{s:21.0000, d:0.5000, m:60},{s:21.5000, d:0.5000, m:64},
+        {s:22.0000, d:1.0000, m:62},{s:25.0000, d:0.5000, m:64},{s:25.5000, d:0.5000, m:62},
+        {s:26.0000, d:1.5000, m:60},{s:27.5000, d:0.5000, m:60},{s:29.5000, d:0.5000, m:67},
+        {s:30.0000, d:1.0000, m:69},{s:31.0000, d:1.0000, m:67},
+      ],
+      "Chorus 2": [
+        {s:0.0000, d:1.0000, m:72},{s:1.0000, d:1.0000, m:71},{s:2.0000, d:0.5000, m:69},
+        {s:2.5000, d:0.5000, m:67},{s:3.0000, d:1.5000, m:69},{s:4.5000, d:1.0000, m:69},
+        {s:5.5000, d:0.5000, m:69},{s:8.0000, d:2.0000, m:69},{s:10.0000, d:0.5000, m:64},
+        {s:10.5000, d:0.5000, m:62},{s:11.0000, d:1.5000, m:64},{s:12.5000, d:1.0000, m:62},
+        {s:13.5000, d:0.2500, m:60},{s:13.7500, d:0.2500, m:62},{s:14.0000, d:1.0000, m:60},
+        {s:17.0000, d:1.0000, m:64},{s:18.0000, d:1.0000, m:60},{s:23.5000, d:0.5000, m:64},
+        {s:24.0000, d:0.5000, m:62},{s:24.5000, d:1.0000, m:60},{s:25.5000, d:1.5000, m:60},
+        {s:27.5000, d:0.5000, m:64},{s:28.0000, d:0.5000, m:62},{s:28.5000, d:1.0000, m:60},
+        {s:29.5000, d:0.5000, m:60},
+      ],
+      "Final Chorus": [
+        {s:1.5000, d:0.5000, m:67},{s:2.0000, d:1.0000, m:69},{s:3.0000, d:1.0000, m:67},
+        {s:4.0000, d:1.0000, m:72},{s:5.0000, d:1.0000, m:71},{s:6.0000, d:0.5000, m:69},
+        {s:6.5000, d:0.5000, m:67},{s:7.0000, d:1.5000, m:69},{s:8.5000, d:1.0000, m:69},
+        {s:9.5000, d:0.5000, m:69},{s:12.0000, d:2.0000, m:69},{s:14.0000, d:0.5000, m:64},
+        {s:14.5000, d:0.5000, m:62},{s:15.0000, d:1.5000, m:64},{s:16.5000, d:1.0000, m:62},
+        {s:17.5000, d:0.2500, m:60},{s:17.7500, d:0.2500, m:62},{s:18.0000, d:1.0000, m:60},
+        {s:21.0000, d:1.0000, m:64},{s:22.0000, d:1.0000, m:60},{s:27.5000, d:0.5000, m:64},
+        {s:28.0000, d:0.5000, m:62},{s:28.5000, d:1.0000, m:60},{s:29.5000, d:1.5000, m:60},
+        {s:31.5000, d:0.5000, m:64},
+      ],
+      "Outro": [
+        {s:0.0000, d:0.5000, m:62},{s:0.5000, d:1.0000, m:60},{s:1.5000, d:0.5000, m:60},
+      ],
+    };
+
+    let melodyEnabled = false;
+    let currentMelodySection = null;
+    let melodyLoopTimeout = null;
+    let melodySynth = null;
+    let melodyGain = null;
+    let melodyVolume = 0.8;
+
+    function initMelodySynth() {
+      if (melodySynth) return;
+      const melReverb = new Tone.Reverb({ decay: 2.0, wet: 0.22 }).toDestination();
+      melodyGain = new Tone.Gain(0).connect(melReverb);
+      melodySynth = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "triangle" },
+        envelope: { attack: 0.008, decay: 0.5, sustain: 0.28, release: 1.8 }
+      }).connect(melodyGain);
+      melodySynth.volume.value = 5;
+    }
+
+    function stopMelody() {
+      if (melodyLoopTimeout) { clearTimeout(melodyLoopTimeout); melodyLoopTimeout = null; }
+      if (melodyGain) melodyGain.gain.rampTo(0, 0.08);
+    }
+
+    function triggerMelody(label) {
+      if (!melodyEnabled) { stopMelody(); return; }
+      initMelodySynth();
+      const notes = MELODY_SECTIONS[label];
+      if (!notes || notes.length === 0) { stopMelody(); return; }
+
+      currentMelodySection = label;
+      if (melodyLoopTimeout) { clearTimeout(melodyLoopTimeout); melodyLoopTimeout = null; }
+      melodyGain.gain.rampTo(melodyVolume, 0.05);
+
+      const bpm = Tone.Transport.bpm.value;
+      const spb = 60 / bpm;
+      const now = Tone.now() + 0.05;
+
+      for (const n of notes) {
+        melodySynth.triggerAttackRelease(
+          Tone.Frequency(n.m, "midi").toNote(),
+          n.d * spb,
+          now + n.s * spb
+        );
+      }
+
+      if (document.getElementById("loopCheck").checked) {
+        melodyLoopTimeout = setTimeout(() => {
+          if (melodyEnabled && currentMelodySection === label) triggerMelody(label);
+        }, 32 * spb * 1000);
+      }
+    }
+
+    function toggleMelody() {
+      melodyEnabled = document.getElementById("melodyCheck").checked;
+      const lbl = document.querySelector(".melody-toggle");
+      lbl.classList.toggle("on", melodyEnabled);
+      if (!melodyEnabled) {
+        stopMelody();
+      } else if (currentMelodySection) {
+        Tone.start().then(() => triggerMelody(currentMelodySection));
+      }
+    }
+
     // ===================== LYRICS =====================
 
     const LYRICS = [
@@ -877,6 +1046,19 @@
     function buildLyricsTabs() {
       const tabs = document.getElementById("lyricsTabs");
 
+      // Play Melody toggle
+      const melodyLabel = document.createElement("label");
+      melodyLabel.className = "melody-toggle";
+      melodyLabel.innerHTML = `<input type="checkbox" id="melodyCheck"> Play Melody <input type="range" class="melody-vol" id="melodyVolSlider" min="0" max="100" value="80" title="Melody volume">`;
+      melodyLabel.querySelector("#melodyCheck").addEventListener("change", toggleMelody);
+      melodyLabel.querySelector("#melodyVolSlider").addEventListener("input", (e) => {
+        e.stopPropagation();
+        melodyVolume = e.target.value / 100;
+        if (melodyGain && melodyEnabled) melodyGain.gain.rampTo(melodyVolume, 0.05);
+      });
+      melodyLabel.querySelector("#melodyVolSlider").addEventListener("click", e => e.stopPropagation());
+      tabs.appendChild(melodyLabel);
+
       // Auto-advance button first
       const autoBtn = document.createElement("button");
       autoBtn.textContent = "Auto Advance";
@@ -910,6 +1092,10 @@
       display.innerHTML =
         `<div class="section-title">[${section.label}]</div>` +
         section.lines.join("<br>");
+
+      if (melodyEnabled) {
+        Tone.start().then(() => triggerMelody(section.label));
+      }
     }
 
     function toggleAutoAdvance() {
