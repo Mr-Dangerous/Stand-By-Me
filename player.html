@@ -144,7 +144,7 @@
     /* ---------- MAIN CONTENT: two columns ---------- */
     .main-content {
       display: grid;
-      grid-template-columns: 160px 1fr;
+      grid-template-columns: 180px 1fr;
       gap: 14px;
       overflow: hidden;
     }
@@ -196,6 +196,7 @@
     .part-toggle .part-name {
       font-size: 0.95rem;
       font-weight: bold;
+      overflow-wrap: break-word;
     }
 
     .part-toggle .part-desc {
@@ -411,32 +412,19 @@
       },
       guiro: {
         name: "Guiro",
-        desc: "Tap + scrapes",
+        desc: "Scratch rhythm",
         muted: false,
         synth: null,
         volume: 1.0,
         gainNode: null,
-        // 8th tap, 2x16th scrape, 6x8th scrape
+        // 7 eighth notes, then eighth + two sixteenths on beat 4
         pattern: function(time, measure) {
           if (this.muted) return;
           const eighth = Tone.Time("8n").toSeconds();
-          const sixteenth = Tone.Time("16n").toSeconds();
-          // Tap
-          this.synthTap.triggerAttackRelease("32n", time);
-          // 2 sixteenths + 6 eighths = 8 scrape hits, round-robin through pool
-          const times = [
-            time + eighth,
-            time + eighth + sixteenth,
-            time + eighth * 2,
-            time + eighth * 3,
-            time + eighth * 4,
-            time + eighth * 5,
-            time + eighth * 6,
-            time + eighth * 7
-          ];
-          for (const t of times) {
-            this.scrapePool[this.scrapeIndex].triggerAttackRelease("32n", t);
-            this.scrapeIndex = (this.scrapeIndex + 1) % this.scrapePool.length;
+          const positions = [0, 1, 2, 3, 4, 5, 6, 7, 7.5];
+          for (const pos of positions) {
+            this.pool[this.poolIndex].triggerAttackRelease("32n", time + eighth * pos);
+            this.poolIndex = (this.poolIndex + 1) % this.pool.length;
           }
         }
       },
@@ -608,26 +596,18 @@
 
       // ---- GUIRO ----
       const guiroPartGain = makePartGain("guiro", masterComp);
-      const guiroTapFilter = new Tone.Filter({ type: "highpass", frequency: 5000 }).connect(guiroPartGain);
-      const guiroTap = new Tone.NoiseSynth({
-        noise: { type: "white" },
-        envelope: { attack: 0.001, decay: 0.025, sustain: 0, release: 0.01 }
-      }).connect(guiroTapFilter);
-      guiroTap.volume.value = -8;
-      PARTS.guiro.synthTap = guiroTap;
-
-      const guiroScrapeFilter = new Tone.Filter({ type: "bandpass", frequency: 3500, Q: 2 }).connect(guiroPartGain);
-      const scrapePool = [];
-      for (let i = 0; i < 8; i++) {
+      const guiroFilter = new Tone.Filter({ type: "bandpass", frequency: 3500, Q: 2 }).connect(guiroPartGain);
+      const guiroPool = [];
+      for (let i = 0; i < 9; i++) {
         const s = new Tone.NoiseSynth({
           noise: { type: "pink" },
           envelope: { attack: 0.003, decay: 0.055, sustain: 0, release: 0.02 }
-        }).connect(guiroScrapeFilter);
+        }).connect(guiroFilter);
         s.volume.value = -14;
-        scrapePool.push(s);
+        guiroPool.push(s);
       }
-      PARTS.guiro.scrapePool = scrapePool;
-      PARTS.guiro.scrapeIndex = 0;
+      PARTS.guiro.pool = guiroPool;
+      PARTS.guiro.poolIndex = 0;
 
       // ---- BASS ----
       const bassPartGain = makePartGain("bass", masterComp);

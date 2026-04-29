@@ -17,8 +17,7 @@
 % ===================== GUIRO STYLE =====================
 
 #(define guiro-style '(
-  (highhat cross #f 1 normal)
-  (bassdrum default #f -1 normal)
+  (bassdrum default #f 0 normal)
 ))
 
 % ===================== CUSTOM UKULELE CHORDS =====================
@@ -116,14 +115,13 @@ theChords = \chordmode {
       % ---- GUIRO ----
       \new DrumStaff \with {
         instrumentName = "Guiro"
-        \override StaffSymbol.line-count = #2
-        \override StaffSymbol.line-positions = #'(-2 2)
+        \override StaffSymbol.line-count = #1
         drumStyleTable = #(alist->hash-table guiro-style)
       } {
         \drummode {
           \time 4/4
           \repeat unfold 8 {
-            hh8 bd16 bd16 bd8 bd8 bd8 bd8 bd8 bd8 |
+            bd8 bd8 bd8 bd8 bd8 bd8 bd8 bd16 bd16 |
           }
         }
       }
