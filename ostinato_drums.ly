@@ -8,6 +8,7 @@
 
 \paper {
   #(set-paper-size "letter" 'landscape)
+  indent = 25\mm
 }
 
 #(set-global-staff-size 26)
