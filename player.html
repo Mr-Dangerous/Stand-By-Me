@@ -417,13 +417,20 @@
         synth: null,
         volume: 1.0,
         gainNode: null,
-        // 7 eighth notes, then eighth + two sixteenths on beat 4
+        // beat 1: e8 e8 | beat 2: e8 e8 | beat 3: e8 e8 | beat 4: e8 e16 e16
         pattern: function(time, measure) {
           if (this.muted) return;
-          const eighth = Tone.Time("8n").toSeconds();
-          const positions = [0, 1, 2, 3, 4, 5, 6, 7, 7.5];
-          for (const pos of positions) {
-            this.pool[this.poolIndex].triggerAttackRelease("32n", time + eighth * pos);
+          const e8 = Tone.Time("8n").toSeconds();
+          const e16 = Tone.Time("16n").toSeconds();
+          // beat 4 = e8(pos 6*e8) → e16(pos 7*e8) → e16(pos 7*e8+e16)
+          const hits = [
+            0, e8,            // beat 1: eighth eighth
+            2*e8, 3*e8,       // beat 2: eighth eighth
+            4*e8, 5*e8,       // beat 3: eighth eighth
+            6*e8, 7*e8, 7*e8 + e16  // beat 4: eighth sixteenth sixteenth
+          ];
+          for (const t of hits) {
+            this.pool[this.poolIndex].triggerAttackRelease("32n", time + t);
             this.poolIndex = (this.poolIndex + 1) % this.pool.length;
           }
         }
